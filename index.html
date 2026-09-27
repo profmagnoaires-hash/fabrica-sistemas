@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2965,21 +2966,60 @@ async function openServiceOrders(){
 function closeServiceOrders(){document.getElementById("serviceOrdersPage").classList.add("hidden");showDashboardModules();}
 async function loadServiceOrders(){
     const body=document.getElementById("serviceOrdersTableBody");
+    if(!body) return;
     body.innerHTML='<tr><td colspan="7" class="empty">Carregando ordens de serviço...</td></tr>';
-    const {data,error}=await supabaseClient.from("service_orders").select("*").order("created_at",{ascending:false});
-    if(error){
-        body.innerHTML=`<tr><td colspan="7" class="empty">Erro ao carregar OS: ${escapeHtml(error.message)}</td></tr>`;
-        return;
+
+    try {
+        const {data:{user}, error:userError}=await supabaseClient.auth.getUser();
+        if(userError || !user){
+            body.innerHTML='<tr><td colspan="7" class="empty">Usuário não autenticado.</td></tr>';
+            return;
+        }
+
+        const {data:profile, error:profileError}=await supabaseClient
+            .from("profiles")
+            .select("company_id")
+            .eq("id", user.id)
+            .single();
+
+        if(profileError || !profile?.company_id){
+            body.innerHTML=`<tr><td colspan="7" class="empty">Não foi possível identificar a empresa: ${escapeHtml(profileError?.message||"perfil não encontrado")}</td></tr>`;
+            return;
+        }
+
+        const {data:orders,error}=await supabaseClient
+            .from("service_orders")
+            .select("id,company_id,client_id,service_order_number,opening_date,scheduled_date,completion_date,status,subtotal,discount,total,description,diagnosis,solution,notes,created_by,created_at,updated_at")
+            .eq("company_id", profile.company_id)
+            .order("created_at",{ascending:false});
+
+        if(error){
+            body.innerHTML=`<tr><td colspan="7" class="empty">Erro ao carregar OS: ${escapeHtml(error.message)}</td></tr>`;
+            return;
+        }
+
+        const list=orders||[];
+        const clientIds=[...new Set(list.map(x=>x.client_id).filter(Boolean))];
+        const clientsMap={};
+        if(clientIds.length){
+            const {data:clients}=await supabaseClient.from("clients").select("id,name").in("id",clientIds);
+            (clients||[]).forEach(c=>clientsMap[c.id]=c.name);
+        }
+
+        serviceOrdersCache=list.map(x=>({
+            ...x,
+            clients:{name:clientsMap[x.client_id]||"—"}
+        }));
+
+        // Garante que ao abrir a tela o filtro esteja mostrando todas as OS.
+        const statusFilter=document.getElementById("serviceOrderStatusFilter");
+        if(statusFilter && !statusFilter.value) statusFilter.value="ALL";
+
+        renderServiceOrders(serviceOrdersCache);
+    } catch(e) {
+        console.error(e);
+        body.innerHTML=`<tr><td colspan="7" class="empty">Erro inesperado ao carregar OS: ${escapeHtml(e.message||String(e))}</td></tr>`;
     }
-    const orders=data||[];
-    const clientIds=[...new Set(orders.map(x=>x.client_id).filter(Boolean))];
-    let clientsMap={};
-    if(clientIds.length){
-        const {data:clients,error:clientError}=await supabaseClient.from("clients").select("id,name").in("id",clientIds);
-        if(!clientError){(clients||[]).forEach(c=>clientsMap[c.id]=c.name);}
-    }
-    serviceOrdersCache=orders.map(x=>({...x,clients:{name:clientsMap[x.client_id]||"—"}}));
-    renderServiceOrders(serviceOrdersCache);
 }
 function renderServiceOrders(list){
     const term=(document.getElementById("serviceOrderSearch").value||"").toLowerCase().trim();
