@@ -470,6 +470,116 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
                 </div>
             </div>
 
+            <!-- MÓDULO FINANCEIRO -->
+            <div class="module-page hidden" id="financePage">
+                <div class="module-header">
+                    <div>
+                        <button class="back-btn" id="backFinanceDashboardBtn">← Dashboard</button>
+                        <h2 style="margin:14px 0 5px">Financeiro</h2>
+                        <div class="userinfo">Controle de receitas, despesas, vencimentos e pagamentos.</div>
+                    </div>
+                    <button class="primary top-action" id="newFinanceBtn">+ Nova movimentação</button>
+                </div>
+
+                <div class="cards" style="margin-bottom:20px">
+                    <div class="card" style="cursor:default"><div class="card-icon">📈</div><div class="card-title">Receitas</div><div class="card-value" id="financeIncomeTotal">R$ 0,00</div></div>
+                    <div class="card" style="cursor:default"><div class="card-icon">📉</div><div class="card-title">Despesas</div><div class="card-value" id="financeExpenseTotal">R$ 0,00</div></div>
+                    <div class="card" style="cursor:default"><div class="card-icon">💰</div><div class="card-title">Saldo</div><div class="card-value" id="financeBalanceTotal">R$ 0,00</div></div>
+                    <div class="card" style="cursor:default"><div class="card-icon">⏳</div><div class="card-title">Pendentes</div><div class="card-value" id="financePendingTotal">R$ 0,00</div></div>
+                </div>
+
+                <div class="toolbar">
+                    <input id="financeSearch" type="search" placeholder="Pesquisar descrição ou categoria...">
+                    <select id="financeTypeFilter">
+                        <option value="ALL">Todos os tipos</option>
+                        <option value="INCOME">Receitas</option>
+                        <option value="EXPENSE">Despesas</option>
+                    </select>
+                    <select id="financeStatusFilter">
+                        <option value="ALL">Todos os status</option>
+                        <option value="PENDING">Pendentes</option>
+                        <option value="PAID">Pagos</option>
+                        <option value="CANCELLED">Cancelados</option>
+                    </select>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr>
+                            <th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Vencimento</th><th>Status</th><th>Ações</th>
+                        </tr></thead>
+                        <tbody id="financeTableBody"><tr><td colspan="8" class="empty">Carregando financeiro...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MODAL FINANCEIRO -->
+            <div class="modal hidden" id="financeModal">
+                <div class="modal-card" style="max-width:760px">
+                    <div class="modal-header">
+                        <div><h3 id="financeModalTitle">Nova movimentação</h3><div class="userinfo">A movimentação será salva diretamente no Supabase.</div></div>
+                        <button class="close-btn" id="closeFinanceModal">×</button>
+                    </div>
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="financeType">Tipo *</label>
+                            <select id="financeType"><option value="INCOME">Receita</option><option value="EXPENSE">Despesa</option></select>
+                        </div>
+                        <div class="field">
+                            <label for="financeStatus">Status *</label>
+                            <select id="financeStatus"><option value="PENDING">Pendente</option><option value="PAID">Pago</option><option value="CANCELLED">Cancelado</option></select>
+                        </div>
+                        <div class="field full">
+                            <label for="financeDescription">Descrição *</label>
+                            <input id="financeDescription" type="text" placeholder="Ex.: Venda de produtos, aluguel, internet...">
+                        </div>
+                        <div class="field">
+                            <label for="financeCategory">Categoria</label>
+                            <select id="financeCategory"><option value="">Sem categoria</option></select>
+                        </div>
+                        <div class="field">
+                            <label for="financeAmount">Valor *</label>
+                            <input id="financeAmount" type="number" min="0.01" step="0.01" placeholder="0,00">
+                        </div>
+                        <div class="field">
+                            <label for="financeDate">Data *</label>
+                            <input id="financeDate" type="date">
+                        </div>
+                        <div class="field">
+                            <label for="financeDueDate">Vencimento</label>
+                            <input id="financeDueDate" type="date">
+                        </div>
+                        <div class="field">
+                            <label for="financePaymentMethod">Forma de pagamento</label>
+                            <select id="financePaymentMethod">
+                                <option value="">Não informado</option><option value="PIX">PIX</option><option value="CASH">Dinheiro</option><option value="DEBIT_CARD">Cartão de débito</option><option value="CREDIT_CARD">Cartão de crédito</option><option value="TRANSFER">Transferência</option><option value="BOLETO">Boleto</option><option value="OTHER">Outro</option>
+                            </select>
+                        </div>
+                        <div class="field full"><label for="financeNotes">Observações</label><textarea id="financeNotes" rows="3" placeholder="Observações"></textarea></div>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="secondary" id="openCategoryBtn">+ Nova categoria</button>
+                        <span style="flex:1"></span>
+                        <button class="secondary" id="cancelFinanceBtn">Cancelar</button>
+                        <button class="primary" id="saveFinanceBtn">Salvar</button>
+                    </div>
+                    <div class="message" id="financeMessage"></div>
+                </div>
+            </div>
+
+            <!-- MODAL CATEGORIA FINANCEIRA -->
+            <div class="modal hidden" id="financeCategoryModal">
+                <div class="modal-card" style="max-width:520px">
+                    <div class="modal-header"><div><h3>Nova categoria</h3><div class="userinfo">Cadastre uma categoria para sua empresa.</div></div><button class="close-btn" id="closeFinanceCategoryModal">×</button></div>
+                    <div class="form-grid">
+                        <div class="field full"><label for="financeCategoryName">Nome *</label><input id="financeCategoryName" type="text" placeholder="Ex.: Vendas, aluguel, fornecedores..."></div>
+                        <div class="field full"><label for="financeCategoryType">Tipo *</label><select id="financeCategoryType"><option value="INCOME">Receita</option><option value="EXPENSE">Despesa</option></select></div>
+                    </div>
+                    <div class="modal-actions"><button class="secondary" id="cancelFinanceCategoryBtn">Cancelar</button><button class="primary" id="saveFinanceCategoryBtn">Salvar categoria</button></div>
+                    <div class="message" id="financeCategoryMessage"></div>
+                </div>
+            </div>
+
             <!-- MÓDULO ESTOQUE -->
             <div class="module-page hidden" id="inventoryPage">
                 <div class="module-header">
@@ -1315,6 +1425,10 @@ async function loadDashboard(){
         if(module.code === "INVENTORY"){
             card.style.cursor = "pointer";
             card.addEventListener("click", openInventory);
+        }
+        if(module.code === "FINANCE"){
+            card.style.cursor = "pointer";
+            card.addEventListener("click", openFinance);
         }
         moduleCards.appendChild(card);
     });
@@ -2383,6 +2497,172 @@ async function saveInventoryMovement(){
     await loadInventory();
 }
 
+/* ---------- Módulo Financeiro ---------- */
+let currentFinanceId = null;
+let financeCache = [];
+let financeCategoriesCache = [];
+
+function financeTypeLabel(type){ return type === "INCOME" ? "Receita" : "Despesa"; }
+function financeStatusLabel(status){ return status === "PAID" ? "Pago" : status === "CANCELLED" ? "Cancelado" : "Pendente"; }
+function financePaymentLabel(v){ const m={PIX:"PIX",CASH:"Dinheiro",DEBIT_CARD:"Cartão de débito",CREDIT_CARD:"Cartão de crédito",TRANSFER:"Transferência",BOLETO:"Boleto",OTHER:"Outro"}; return m[v]||v||"—"; }
+
+async function openFinance(){
+    hideDashboardModules();
+    document.getElementById("clientsPage").classList.add("hidden");
+    document.getElementById("productsPage").classList.add("hidden");
+    document.getElementById("servicesPage").classList.add("hidden");
+    document.getElementById("appointmentsPage").classList.add("hidden");
+    document.getElementById("salesPage").classList.add("hidden");
+    document.getElementById("inventoryPage").classList.add("hidden");
+    document.getElementById("financePage").classList.remove("hidden");
+    await loadFinanceCategories();
+    await loadFinance();
+}
+function closeFinance(){ document.getElementById("financePage").classList.add("hidden"); showDashboardModules(); }
+
+async function loadFinanceCategories(){
+    const {data,error}=await supabaseClient.from("financial_categories").select("id,name,type,active").eq("active",true).order("name",{ascending:true});
+    if(error){ financeCategoriesCache=[]; return; }
+    financeCategoriesCache=data||[];
+    renderFinanceCategoryOptions();
+}
+function renderFinanceCategoryOptions(selected=""){
+    const select=document.getElementById("financeCategory");
+    if(!select) return;
+    const type=document.getElementById("financeType")?.value||"INCOME";
+    const list=financeCategoriesCache.filter(c=>c.type===type);
+    select.innerHTML='<option value="">Sem categoria</option>'+list.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+    select.value=selected||"";
+}
+
+async function loadFinance(){
+    const tbody=document.getElementById("financeTableBody");
+    tbody.innerHTML='<tr><td colspan="8" class="empty">Carregando financeiro...</td></tr>';
+    const {data,error}=await supabaseClient.from("financial_transactions").select("id,category_id,description,type,amount,transaction_date,due_date,paid_at,status,payment_method,notes,created_at,financial_categories(name)").order("transaction_date",{ascending:false}).order("created_at",{ascending:false}).limit(500);
+    if(error){ tbody.innerHTML=`<tr><td colspan="8" class="empty">${escapeHtml(error.message)}</td></tr>`; financeCache=[]; updateFinanceSummary(); return; }
+    financeCache=data||[];
+    updateFinanceSummary();
+    renderFinance(financeCache);
+}
+function updateFinanceSummary(){
+    const income=financeCache.filter(x=>x.type==="INCOME"&&x.status!=="CANCELLED").reduce((a,x)=>a+Number(x.amount||0),0);
+    const expense=financeCache.filter(x=>x.type==="EXPENSE"&&x.status!=="CANCELLED").reduce((a,x)=>a+Number(x.amount||0),0);
+    const pending=financeCache.filter(x=>x.status==="PENDING").reduce((a,x)=>a+Number(x.amount||0),0);
+    document.getElementById("financeIncomeTotal").textContent=formatMoney(income);
+    document.getElementById("financeExpenseTotal").textContent=formatMoney(expense);
+    document.getElementById("financeBalanceTotal").textContent=formatMoney(income-expense);
+    document.getElementById("financePendingTotal").textContent=formatMoney(pending);
+}
+function renderFinance(list){
+    const tbody=document.getElementById("financeTableBody");
+    const search=(document.getElementById("financeSearch").value||"").toLowerCase().trim();
+    const type=document.getElementById("financeTypeFilter").value;
+    const status=document.getElementById("financeStatusFilter").value;
+    const rows=list.filter(x=>{
+        const cat=x.financial_categories?.name||"";
+        if(search && !(`${x.description||""} ${cat}`).toLowerCase().includes(search)) return false;
+        if(type!=="ALL"&&x.type!==type) return false;
+        if(status!=="ALL"&&x.status!==status) return false;
+        return true;
+    });
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="8" class="empty">Nenhuma movimentação encontrada.</td></tr>';return;}
+    tbody.innerHTML=rows.map(x=>`<tr>
+        <td>${formatDateBR(x.transaction_date)}</td>
+        <td><strong>${escapeHtml(x.description||"")}</strong><br><span class="userinfo">${escapeHtml(financePaymentLabel(x.payment_method))}</span></td>
+        <td>${escapeHtml(x.financial_categories?.name||"—")}</td>
+        <td>${financeTypeLabel(x.type)}</td>
+        <td>${formatMoney(x.amount)}</td>
+        <td>${formatDateBR(x.due_date)}</td>
+        <td><span class="badge">${financeStatusLabel(x.status)}</span></td>
+        <td><button class="action-btn edit-finance" data-id="${x.id}">Editar</button><button class="action-btn delete delete-finance" data-id="${x.id}">Excluir</button></td>
+    </tr>`).join("");
+    tbody.querySelectorAll(".edit-finance").forEach(b=>b.addEventListener("click",()=>editFinance(b.dataset.id)));
+    tbody.querySelectorAll(".delete-finance").forEach(b=>b.addEventListener("click",()=>deleteFinance(b.dataset.id)));
+}
+function openFinanceModal(item=null){
+    currentFinanceId=item?.id||null;
+    document.getElementById("financeModalTitle").textContent=item?"Editar movimentação":"Nova movimentação";
+    document.getElementById("financeType").value=item?.type||"INCOME";
+    renderFinanceCategoryOptions(item?.category_id||"");
+    document.getElementById("financeDescription").value=item?.description||"";
+    document.getElementById("financeAmount").value=item?.amount??"";
+    document.getElementById("financeDate").value=item?.transaction_date||new Date().toISOString().slice(0,10);
+    document.getElementById("financeDueDate").value=item?.due_date||"";
+    document.getElementById("financeStatus").value=item?.status||"PENDING";
+    document.getElementById("financePaymentMethod").value=item?.payment_method||"";
+    document.getElementById("financeNotes").value=item?.notes||"";
+    clearMessage(document.getElementById("financeMessage"));
+    document.getElementById("financeModal").classList.remove("hidden");
+}
+function closeFinanceModal(){document.getElementById("financeModal").classList.add("hidden");currentFinanceId=null;}
+async function editFinance(id){
+    const {data,error}=await supabaseClient.from("financial_transactions").select("*").eq("id",id).single();
+    if(error){alert("Não foi possível carregar: "+error.message);return;}
+    await loadFinanceCategories(); openFinanceModal(data);
+}
+async function saveFinance(){
+    const msg=document.getElementById("financeMessage"); clearMessage(msg);
+    const description=document.getElementById("financeDescription").value.trim();
+    const amount=Number(document.getElementById("financeAmount").value||0);
+    const transactionDate=document.getElementById("financeDate").value;
+    if(!description) return showMessage(msg,"Informe a descrição.","error");
+    if(!Number.isFinite(amount)||amount<=0) return showMessage(msg,"Informe um valor válido.","error");
+    if(!transactionDate) return showMessage(msg,"Informe a data.","error");
+    const status=document.getElementById("financeStatus").value;
+    const payload={type:document.getElementById("financeType").value,category_id:document.getElementById("financeCategory").value||null,description,amount,transaction_date:transactionDate,due_date:document.getElementById("financeDueDate").value||null,status,payment_method:document.getElementById("financePaymentMethod").value||null,notes:document.getElementById("financeNotes").value.trim()||null,updated_at:new Date().toISOString()};
+    if(status==="PAID") payload.paid_at=new Date().toISOString(); else payload.paid_at=null;
+    let result;
+    if(currentFinanceId){ result=await supabaseClient.from("financial_transactions").update(payload).eq("id",currentFinanceId); }
+    else{
+        const {data:{user}}=await supabaseClient.auth.getUser();
+        const {data:profile,error:profileError}=await supabaseClient.from("profiles").select("company_id").eq("id",user?.id).single();
+        if(profileError||!profile?.company_id) return showMessage(msg,"Não foi possível identificar a empresa do usuário.","error");
+        payload.company_id=profile.company_id; payload.created_by=user?.id||null;
+        result=await supabaseClient.from("financial_transactions").insert(payload);
+    }
+    if(result.error){showMessage(msg,result.error.message,"error");return;}
+    closeFinanceModal(); await loadFinance();
+}
+async function deleteFinance(id){
+    const item=financeCache.find(x=>x.id===id); if(!item)return;
+    if(!confirm(`Excluir a movimentação "${item.description}"?`))return;
+    const {error}=await supabaseClient.from("financial_transactions").delete().eq("id",id);
+    if(error){alert("Não foi possível excluir: "+error.message);return;}
+    await loadFinance();
+}
+function openFinanceCategoryModal(){
+    document.getElementById("financeCategoryName").value="";
+    document.getElementById("financeCategoryType").value=document.getElementById("financeType").value||"INCOME";
+    clearMessage(document.getElementById("financeCategoryMessage"));
+    document.getElementById("financeCategoryModal").classList.remove("hidden");
+}
+function closeFinanceCategoryModal(){document.getElementById("financeCategoryModal").classList.add("hidden");}
+async function saveFinanceCategory(){
+    const msg=document.getElementById("financeCategoryMessage");clearMessage(msg);
+    const name=document.getElementById("financeCategoryName").value.trim(); const type=document.getElementById("financeCategoryType").value;
+    if(!name)return showMessage(msg,"Informe o nome da categoria.","error");
+    const {data:{user}}=await supabaseClient.auth.getUser();
+    const {data:profile,error:profileError}=await supabaseClient.from("profiles").select("company_id").eq("id",user?.id).single();
+    if(profileError||!profile?.company_id)return showMessage(msg,"Não foi possível identificar a empresa do usuário.","error");
+    const {error}=await supabaseClient.from("financial_categories").insert({company_id:profile.company_id,name,type,active:true});
+    if(error)return showMessage(msg,error.message,"error");
+    await loadFinanceCategories(); closeFinanceCategoryModal(); renderFinanceCategoryOptions();
+}
+
+document.getElementById("newFinanceBtn").addEventListener("click",async()=>{await loadFinanceCategories();openFinanceModal();});
+document.getElementById("closeFinanceModal").addEventListener("click",closeFinanceModal);
+document.getElementById("cancelFinanceBtn").addEventListener("click",closeFinanceModal);
+document.getElementById("saveFinanceBtn").addEventListener("click",saveFinance);
+document.getElementById("backFinanceDashboardBtn").addEventListener("click",closeFinance);
+document.getElementById("financeType").addEventListener("change",()=>renderFinanceCategoryOptions());
+document.getElementById("openCategoryBtn").addEventListener("click",openFinanceCategoryModal);
+document.getElementById("closeFinanceCategoryModal").addEventListener("click",closeFinanceCategoryModal);
+document.getElementById("cancelFinanceCategoryBtn").addEventListener("click",closeFinanceCategoryModal);
+document.getElementById("saveFinanceCategoryBtn").addEventListener("click",saveFinanceCategory);
+document.getElementById("financeSearch").addEventListener("input",()=>renderFinance(financeCache));
+document.getElementById("financeTypeFilter").addEventListener("change",()=>renderFinance(financeCache));
+document.getElementById("financeStatusFilter").addEventListener("change",()=>renderFinance(financeCache));
+
 /* ---------- Módulo Serviços ---------- */
 let currentServiceId = null;
 let servicesCache = [];
@@ -2635,6 +2915,7 @@ function showDashboardModules(){
     document.getElementById("appointmentsPage").classList.add("hidden");
     document.getElementById("salesPage").classList.add("hidden");
     document.getElementById("inventoryPage").classList.add("hidden");
+    document.getElementById("financePage").classList.add("hidden");
 }
 
 async function openProducts(){
