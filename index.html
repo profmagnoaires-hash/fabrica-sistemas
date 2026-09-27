@@ -2964,9 +2964,22 @@ async function openServiceOrders(){
 }
 function closeServiceOrders(){document.getElementById("serviceOrdersPage").classList.add("hidden");showDashboardModules();}
 async function loadServiceOrders(){
-    const {data,error}=await supabaseClient.from("service_orders").select("*,clients(name)").order("created_at",{ascending:false});
-    if(error){document.getElementById("serviceOrdersTableBody").innerHTML=`<tr><td colspan="7" class="empty">Erro: ${escapeHtml(error.message)}</td></tr>`;return;}
-    serviceOrdersCache=data||[];renderServiceOrders(serviceOrdersCache);
+    const body=document.getElementById("serviceOrdersTableBody");
+    body.innerHTML='<tr><td colspan="7" class="empty">Carregando ordens de serviço...</td></tr>';
+    const {data,error}=await supabaseClient.from("service_orders").select("*").order("created_at",{ascending:false});
+    if(error){
+        body.innerHTML=`<tr><td colspan="7" class="empty">Erro ao carregar OS: ${escapeHtml(error.message)}</td></tr>`;
+        return;
+    }
+    const orders=data||[];
+    const clientIds=[...new Set(orders.map(x=>x.client_id).filter(Boolean))];
+    let clientsMap={};
+    if(clientIds.length){
+        const {data:clients,error:clientError}=await supabaseClient.from("clients").select("id,name").in("id",clientIds);
+        if(!clientError){(clients||[]).forEach(c=>clientsMap[c.id]=c.name);}
+    }
+    serviceOrdersCache=orders.map(x=>({...x,clients:{name:clientsMap[x.client_id]||"—"}}));
+    renderServiceOrders(serviceOrdersCache);
 }
 function renderServiceOrders(list){
     const term=(document.getElementById("serviceOrderSearch").value||"").toLowerCase().trim();
