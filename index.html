@@ -470,6 +470,114 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
                 </div>
             </div>
 
+            <!-- MÓDULO ESTOQUE -->
+            <div class="module-page hidden" id="inventoryPage">
+                <div class="module-header">
+                    <div>
+                        <button class="back-btn" id="backInventoryDashboardBtn">← Dashboard</button>
+                        <h2 style="margin:14px 0 5px">Estoque</h2>
+                        <div class="userinfo">Controle de entradas, saídas, ajustes e estoque atual dos produtos.</div>
+                    </div>
+                    <button class="primary top-action" id="newInventoryMovementBtn">+ Nova movimentação</button>
+                </div>
+
+                <div class="toolbar">
+                    <input id="inventorySearch" type="search" placeholder="Pesquisar produto, código ou código de barras...">
+                    <select id="inventoryStatusFilter">
+                        <option value="ALL">Todos</option>
+                        <option value="LOW">Estoque baixo</option>
+                        <option value="OK">Estoque normal</option>
+                        <option value="ZERO">Sem estoque</option>
+                    </select>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Código</th>
+                                <th>Estoque</th>
+                                <th>Mínimo</th>
+                                <th>Unidade</th>
+                                <th>Situação</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody">
+                            <tr><td colspan="7" class="empty">Carregando estoque...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="margin-top:24px">
+                    <h3 style="margin:0 0 12px">Histórico de movimentações</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Produto</th>
+                                    <th>Tipo</th>
+                                    <th>Quantidade</th>
+                                    <th>Custo</th>
+                                    <th>Motivo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryMovementsTableBody">
+                                <tr><td colspan="6" class="empty">Carregando movimentações...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL MOVIMENTAÇÃO DE ESTOQUE -->
+            <div class="modal hidden" id="inventoryModal">
+                <div class="modal-card" style="max-width:650px">
+                    <div class="modal-header">
+                        <div>
+                            <h3 id="inventoryModalTitle">Nova movimentação</h3>
+                            <div class="userinfo">A alteração será registrada no histórico e refletida no estoque do produto.</div>
+                        </div>
+                        <button class="close-btn" id="closeInventoryModal">×</button>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="field full">
+                            <label for="inventoryProduct">Produto</label>
+                            <select id="inventoryProduct"></select>
+                        </div>
+                        <div class="field">
+                            <label for="inventoryType">Tipo</label>
+                            <select id="inventoryType">
+                                <option value="IN">Entrada</option>
+                                <option value="OUT">Saída</option>
+                                <option value="ADJUSTMENT">Ajuste</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="inventoryQuantity" id="inventoryQuantityLabel">Quantidade</label>
+                            <input id="inventoryQuantity" type="number" min="0" step="0.001" value="1">
+                        </div>
+                        <div class="field">
+                            <label for="inventoryUnitCost">Custo unitário</label>
+                            <input id="inventoryUnitCost" type="number" min="0" step="0.01" value="0">
+                        </div>
+                        <div class="field full">
+                            <label for="inventoryNotes">Motivo / observação</label>
+                            <textarea id="inventoryNotes" rows="3" placeholder="Ex.: Compra de mercadoria, perda, conferência física..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button class="secondary" id="cancelInventoryBtn">Cancelar</button>
+                        <button class="primary" id="saveInventoryBtn">Registrar movimentação</button>
+                    </div>
+                    <div class="message" id="inventoryMessage"></div>
+                </div>
+            </div>
+
             <!-- FORMULÁRIO VENDA -->
             <div class="modal hidden" id="saleModal">
                 <div class="modal-card" style="max-width:900px">
@@ -1168,6 +1276,7 @@ async function loadDashboard(){
         {code:"SERVICES", name:"Serviços", icon:"🛠️", description:"Catálogo de serviços."},
         {code:"APPOINTMENTS", name:"Agenda", icon:"📅", description:"Agendamentos."},
         {code:"SALES", name:"Vendas", icon:"🛒", description:"Registro de vendas."},
+        {code:"INVENTORY", name:"Estoque", icon:"📦", description:"Controle de estoque e movimentações."},
         {code:"FINANCE", name:"Financeiro", icon:"💰", description:"Entradas e saídas."}
     ];
 
@@ -1202,6 +1311,10 @@ async function loadDashboard(){
         if(module.code === "SALES"){
             card.style.cursor = "pointer";
             card.addEventListener("click", openSales);
+        }
+        if(module.code === "INVENTORY"){
+            card.style.cursor = "pointer";
+            card.addEventListener("click", openInventory);
         }
         moduleCards.appendChild(card);
     });
@@ -2099,6 +2212,169 @@ document.getElementById("saleItemSelect").addEventListener("change", () => {
 document.getElementById("saleDateFilter").addEventListener("change", loadSales);
 document.getElementById("saleSearch").addEventListener("input", () => renderSales(salesCache));
 
+/* ---------- Módulo Estoque ---------- */
+let inventoryProductsCache = [];
+let inventoryMovementsCache = [];
+
+function inventoryTypeLabel(type){
+    return type === "IN" ? "Entrada" : type === "OUT" ? "Saída" : "Ajuste";
+}
+
+function inventoryStatus(stock, minimum){
+    const s = Number(stock || 0), m = Number(minimum || 0);
+    if(s <= 0) return {label:"Sem estoque", cls:"badge danger"};
+    if(s <= m) return {label:"Estoque baixo", cls:"badge warning"};
+    return {label:"Normal", cls:"badge success"};
+}
+
+async function openInventory(){
+    hideDashboardModules();
+    document.getElementById("clientsPage").classList.add("hidden");
+    document.getElementById("productsPage").classList.add("hidden");
+    document.getElementById("servicesPage").classList.add("hidden");
+    document.getElementById("appointmentsPage").classList.add("hidden");
+    document.getElementById("salesPage").classList.add("hidden");
+    document.getElementById("inventoryPage").classList.remove("hidden");
+    await loadInventory();
+}
+
+function closeInventory(){
+    document.getElementById("inventoryPage").classList.add("hidden");
+    showDashboardModules();
+}
+
+async function loadInventory(){
+    const tbody = document.getElementById("inventoryTableBody");
+    const movementBody = document.getElementById("inventoryMovementsTableBody");
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Carregando estoque...</td></tr>';
+    movementBody.innerHTML = '<tr><td colspan="6" class="empty">Carregando movimentações...</td></tr>';
+
+    const [productsResult, movementsResult] = await Promise.all([
+        supabaseClient.from("products").select("id,name,code,barcode,stock,minimum_stock,unit,active").eq("active",true).order("name",{ascending:true}),
+        supabaseClient.from("inventory_movements").select("id,product_id,type,quantity,unit_cost,reference_type,notes,created_at,products(name)").order("created_at",{ascending:false}).limit(100)
+    ]);
+
+    if(productsResult.error){
+        tbody.innerHTML = `<tr><td colspan="7" class="empty">${escapeHtml(productsResult.error.message)}</td></tr>`;
+        inventoryProductsCache = [];
+    } else {
+        inventoryProductsCache = productsResult.data || [];
+        renderInventoryProducts();
+    }
+
+    if(movementsResult.error){
+        movementBody.innerHTML = `<tr><td colspan="6" class="empty">${escapeHtml(movementsResult.error.message)}</td></tr>`;
+    } else {
+        inventoryMovementsCache = movementsResult.data || [];
+        renderInventoryMovements();
+    }
+}
+
+function renderInventoryProducts(){
+    const tbody = document.getElementById("inventoryTableBody");
+    const search = (document.getElementById("inventorySearch").value || "").toLowerCase().trim();
+    const filter = document.getElementById("inventoryStatusFilter").value;
+    const rows = inventoryProductsCache.filter(p => {
+        const text = `${p.name||""} ${p.code||""} ${p.barcode||""}`.toLowerCase();
+        if(search && !text.includes(search)) return false;
+        const s = Number(p.stock || 0), m = Number(p.minimum_stock || 0);
+        if(filter === "ZERO" && s > 0) return false;
+        if(filter === "LOW" && !(s > 0 && s <= m)) return false;
+        if(filter === "OK" && !(s > m)) return false;
+        return true;
+    });
+    if(!rows.length){ tbody.innerHTML='<tr><td colspan="7" class="empty">Nenhum produto encontrado.</td></tr>'; return; }
+    tbody.innerHTML = rows.map(p => {
+        const st = inventoryStatus(p.stock,p.minimum_stock);
+        return `<tr>
+            <td><strong>${escapeHtml(p.name)}</strong></td>
+            <td>${escapeHtml(p.code || p.barcode || "—")}</td>
+            <td>${Number(p.stock||0).toLocaleString("pt-BR",{maximumFractionDigits:3})}</td>
+            <td>${Number(p.minimum_stock||0).toLocaleString("pt-BR",{maximumFractionDigits:3})}</td>
+            <td>${escapeHtml(p.unit || "UN")}</td>
+            <td><span class="${st.cls}">${st.label}</span></td>
+            <td><button class="small-btn" onclick="openInventoryMovementForProduct('${p.id}')">Movimentar</button></td>
+        </tr>`;
+    }).join("");
+}
+
+function renderInventoryMovements(){
+    const tbody=document.getElementById("inventoryMovementsTableBody");
+    if(!inventoryMovementsCache.length){tbody.innerHTML='<tr><td colspan="6" class="empty">Nenhuma movimentação registrada.</td></tr>';return;}
+    tbody.innerHTML=inventoryMovementsCache.map(m=>`<tr>
+        <td>${new Date(m.created_at).toLocaleString("pt-BR")}</td>
+        <td>${escapeHtml(m.products?.name || "Produto")}</td>
+        <td>${inventoryTypeLabel(m.type)}</td>
+        <td>${Number(m.quantity||0).toLocaleString("pt-BR",{maximumFractionDigits:3})}</td>
+        <td>R$ ${Number(m.unit_cost||0).toLocaleString("pt-BR",{minimumFractionDigits:2})}</td>
+        <td>${escapeHtml(m.notes || "—")}</td>
+    </tr>`).join("");
+}
+
+function openInventoryMovementForProduct(productId){
+    document.getElementById("inventoryProduct").value=productId;
+    openInventoryModal();
+}
+
+function openInventoryModal(){
+    const select=document.getElementById("inventoryProduct");
+    select.innerHTML='<option value="">Selecione o produto</option>' + inventoryProductsCache.map(p=>`<option value="${p.id}">${escapeHtml(p.name)} — estoque: ${Number(p.stock||0).toLocaleString("pt-BR",{maximumFractionDigits:3})}</option>`).join("");
+    document.getElementById("inventoryType").value="IN";
+    document.getElementById("inventoryQuantity").value="1";
+    document.getElementById("inventoryUnitCost").value="0";
+    document.getElementById("inventoryNotes").value="";
+    document.getElementById("inventoryMessage").textContent="";
+    document.getElementById("inventoryModal").classList.remove("hidden");
+    updateInventoryQuantityLabel();
+}
+function closeInventoryModal(){document.getElementById("inventoryModal").classList.add("hidden");}
+function updateInventoryQuantityLabel(){document.getElementById("inventoryQuantityLabel").textContent=document.getElementById("inventoryType").value==="ADJUSTMENT"?"Novo estoque":"Quantidade";}
+
+async function saveInventoryMovement(){
+    const message=document.getElementById("inventoryMessage");
+    const productId=document.getElementById("inventoryProduct").value;
+    const type=document.getElementById("inventoryType").value;
+    const qty=Number(document.getElementById("inventoryQuantity").value);
+    const unitCost=Number(document.getElementById("inventoryUnitCost").value||0);
+    const notes=document.getElementById("inventoryNotes").value.trim();
+    if(!productId) return showMessage(message,"Selecione um produto.","error");
+    if(!Number.isFinite(qty) || qty < 0 || (type!=="ADJUSTMENT" && qty<=0)) return showMessage(message,"Informe uma quantidade válida.","error");
+    const product=inventoryProductsCache.find(p=>p.id===productId);
+    if(!product) return showMessage(message,"Produto não encontrado.","error");
+    const current=Number(product.stock||0);
+    let newStock=current, movementQty=qty;
+    if(type==="IN") newStock=current+qty;
+    if(type==="OUT"){
+        if(qty>current) return showMessage(message,"A saída não pode ser maior que o estoque atual.","error");
+        newStock=current-qty;
+    }
+    if(type==="ADJUSTMENT"){
+        newStock=qty;
+        movementQty=qty-current;
+    }
+
+    const {data:userData}=await supabaseClient.auth.getUser();
+    const user=userData?.user;
+    const {error:updateError}=await supabaseClient.from("products").update({stock:newStock,updated_at:new Date().toISOString()}).eq("id",productId);
+    if(updateError) return showMessage(message,updateError.message,"error");
+
+    const {error:movementError}=await supabaseClient.from("inventory_movements").insert({
+        product_id:productId,
+        type,
+        quantity:movementQty,
+        unit_cost:unitCost,
+        reference_type:"MANUAL",
+        notes:notes || (type==="IN"?"Entrada manual":type==="OUT"?"Saída manual":"Ajuste manual"),
+        created_by:user?.id || null
+    });
+    if(movementError){
+        await supabaseClient.from("products").update({stock:current,updated_at:new Date().toISOString()}).eq("id",productId);
+        return showMessage(message,movementError.message,"error");
+    }
+    closeInventoryModal();
+    await loadInventory();
+}
+
 /* ---------- Módulo Serviços ---------- */
 let currentServiceId = null;
 let servicesCache = [];
@@ -2350,6 +2626,7 @@ function showDashboardModules(){
     document.getElementById("servicesPage").classList.add("hidden");
     document.getElementById("appointmentsPage").classList.add("hidden");
     document.getElementById("salesPage").classList.add("hidden");
+    document.getElementById("inventoryPage").classList.add("hidden");
 }
 
 async function openProducts(){
@@ -2825,6 +3102,17 @@ supabaseClient.auth.onAuthStateChange(async (event, session) => {
         showView(loginView);
     }
 })();
+
+
+/* Eventos do Estoque */
+document.getElementById("newInventoryMovementBtn").addEventListener("click", async()=>{ await loadInventory(); openInventoryModal(); });
+document.getElementById("closeInventoryModal").addEventListener("click", closeInventoryModal);
+document.getElementById("cancelInventoryBtn").addEventListener("click", closeInventoryModal);
+document.getElementById("saveInventoryBtn").addEventListener("click", saveInventoryMovement);
+document.getElementById("backInventoryDashboardBtn").addEventListener("click", closeInventory);
+document.getElementById("inventoryType").addEventListener("change", updateInventoryQuantityLabel);
+document.getElementById("inventorySearch").addEventListener("input", renderInventoryProducts);
+document.getElementById("inventoryStatusFilter").addEventListener("change", renderInventoryProducts);
 </script>
 
 </body>
