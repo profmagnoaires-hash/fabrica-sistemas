@@ -541,6 +541,79 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
                 </div>
             </div>
 
+            <!-- MÓDULO ORDENS DE SERVIÇO -->
+            <div class="module-page hidden" id="serviceOrdersPage">
+                <div class="module-header">
+                    <div>
+                        <button class="back-btn" id="backServiceOrdersDashboardBtn">← Dashboard</button>
+                        <h2 style="margin:14px 0 5px">Ordens de Serviço</h2>
+                        <div class="userinfo">Controle de serviços, diagnósticos, soluções e itens utilizados.</div>
+                    </div>
+                    <button class="primary top-action" id="newServiceOrderBtn">+ Nova OS</button>
+                </div>
+                <div class="toolbar">
+                    <input id="serviceOrderSearch" type="search" placeholder="Pesquisar por cliente ou número da OS...">
+                    <select id="serviceOrderStatusFilter">
+                        <option value="ALL">Todos os status</option>
+                        <option value="OPEN">Abertas</option>
+                        <option value="IN_PROGRESS">Em andamento</option>
+                        <option value="WAITING">Aguardando</option>
+                        <option value="COMPLETED">Concluídas</option>
+                        <option value="CANCELLED">Canceladas</option>
+                    </select>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>OS</th><th>Abertura</th><th>Cliente</th><th>Previsão</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead>
+                        <tbody id="serviceOrdersTableBody"><tr><td colspan="7" class="empty">Carregando ordens de serviço...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MODAL ORDEM DE SERVIÇO -->
+            <div class="modal hidden" id="serviceOrderModal">
+                <div class="modal-card" style="max-width:1050px">
+                    <div class="modal-header">
+                        <div><h3 id="serviceOrderModalTitle">Nova ordem de serviço</h3><div class="userinfo">Registre o atendimento e os itens utilizados.</div></div>
+                        <button class="close-btn" id="closeServiceOrderModal">×</button>
+                    </div>
+                    <div class="form-grid">
+                        <div class="field full"><label for="serviceOrderClient">Cliente *</label><select id="serviceOrderClient"><option value="">Selecione o cliente</option></select></div>
+                        <div class="field"><label for="serviceOrderOpeningDate">Data de abertura *</label><input id="serviceOrderOpeningDate" type="date"></div>
+                        <div class="field"><label for="serviceOrderScheduledDate">Data prevista</label><input id="serviceOrderScheduledDate" type="date"></div>
+                        <div class="field"><label for="serviceOrderCompletionDate">Data de conclusão</label><input id="serviceOrderCompletionDate" type="date"></div>
+                        <div class="field"><label for="serviceOrderStatus">Status *</label><select id="serviceOrderStatus"><option value="OPEN">Aberta</option><option value="IN_PROGRESS">Em andamento</option><option value="WAITING">Aguardando</option><option value="COMPLETED">Concluída</option><option value="CANCELLED">Cancelada</option></select></div>
+                        <div class="field full"><label for="serviceOrderDescription">Descrição do problema / solicitação</label><textarea id="serviceOrderDescription" rows="3" placeholder="Descreva o que o cliente solicitou ou o problema apresentado..."></textarea></div>
+                        <div class="field full"><label for="serviceOrderDiagnosis">Diagnóstico</label><textarea id="serviceOrderDiagnosis" rows="3" placeholder="Informe o diagnóstico realizado..."></textarea></div>
+                        <div class="field full"><label for="serviceOrderSolution">Solução / serviço realizado</label><textarea id="serviceOrderSolution" rows="3" placeholder="Descreva o serviço executado ou a solução aplicada..."></textarea></div>
+                    </div>
+                    <div style="margin-top:18px">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px"><strong>Itens da ordem de serviço</strong><button class="secondary" id="addServiceOrderItemBtn">+ Adicionar item</button></div>
+                        <div class="table-wrap"><table><thead><tr><th>Tipo</th><th>Item</th><th>Qtd.</th><th>Preço</th><th>Desconto</th><th>Total</th><th>Ação</th></tr></thead><tbody id="serviceOrderItemsTableBody"><tr><td colspan="7" class="empty">Nenhum item adicionado.</td></tr></tbody></table></div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;margin-top:18px"><div style="min-width:260px;text-align:right"><div class="userinfo">Subtotal</div><div id="serviceOrderSubtotalDisplay" style="font-size:18px;font-weight:800">R$ 0,00</div><div class="userinfo" style="margin-top:8px">Desconto total</div><div id="serviceOrderDiscountDisplay" style="font-size:16px;font-weight:750">R$ 0,00</div><div class="userinfo" style="margin-top:8px">TOTAL</div><div id="serviceOrderTotalDisplay" style="font-size:27px;font-weight:900;color:#1d4ed8">R$ 0,00</div></div></div>
+                    <div class="field full" style="margin-top:18px"><label for="serviceOrderNotes">Observações</label><textarea id="serviceOrderNotes" rows="3" placeholder="Observações adicionais..."></textarea></div>
+                    <div class="modal-actions"><button class="secondary" id="cancelServiceOrderBtn">Cancelar</button><button class="primary" id="saveServiceOrderBtn">Salvar OS</button></div>
+                    <div class="message" id="serviceOrderMessage"></div>
+                </div>
+            </div>
+
+            <!-- MODAL ITEM DA ORDEM DE SERVIÇO -->
+            <div class="modal hidden" id="serviceOrderItemModal">
+                <div class="modal-card" style="max-width:650px">
+                    <div class="modal-header"><div><h3>Adicionar item à OS</h3><div class="userinfo">Escolha um produto ou serviço.</div></div><button class="close-btn" id="closeServiceOrderItemModal">×</button></div>
+                    <div class="form-grid">
+                        <div class="field"><label for="serviceOrderItemType">Tipo *</label><select id="serviceOrderItemType"><option value="PRODUCT">Produto</option><option value="SERVICE">Serviço</option></select></div>
+                        <div class="field"><label for="serviceOrderItemSelect">Item *</label><select id="serviceOrderItemSelect"><option value="">Selecione</option></select></div>
+                        <div class="field"><label for="serviceOrderItemQuantity">Quantidade *</label><input id="serviceOrderItemQuantity" type="number" min="0.001" step="0.001" value="1"></div>
+                        <div class="field"><label for="serviceOrderItemPrice">Preço unitário *</label><input id="serviceOrderItemPrice" type="number" min="0" step="0.01"></div>
+                        <div class="field full"><label for="serviceOrderItemDiscount">Desconto</label><input id="serviceOrderItemDiscount" type="number" min="0" step="0.01" value="0"></div>
+                    </div>
+                    <div class="modal-actions"><button class="secondary" id="cancelServiceOrderItemBtn">Cancelar</button><button class="primary" id="saveServiceOrderItemBtn">Adicionar</button></div>
+                    <div class="message" id="serviceOrderItemMessage"></div>
+                </div>
+            </div>
+
             <!-- MÓDULO FINANCEIRO -->
             <div class="module-page hidden" id="financePage">
                 <div class="module-header">
@@ -1459,7 +1532,8 @@ async function loadDashboard(){
         {code:"SALES", name:"Vendas", icon:"🛒", description:"Registro de vendas."},
         {code:"INVENTORY", name:"Estoque", icon:"📦", description:"Controle de estoque e movimentações."},
         {code:"FINANCE", name:"Financeiro", icon:"💰", description:"Entradas e saídas."},
-        {code:"QUOTES", name:"Orçamentos", icon:"🧾", description:"Propostas e orçamentos."}
+        {code:"QUOTES", name:"Orçamentos", icon:"🧾", description:"Propostas e orçamentos."},
+        {code:"SERVICE_ORDERS", name:"Ordens de Serviço", icon:"🔧", description:"Controle de serviços e atendimentos."}
     ];
 
     const activeModules = (modules || [])
@@ -1505,6 +1579,10 @@ async function loadDashboard(){
         if(module.code === "QUOTES"){
             card.style.cursor = "pointer";
             card.addEventListener("click", openQuotes);
+        }
+        if(module.code === "SERVICE_ORDERS"){
+            card.style.cursor = "pointer";
+            card.addEventListener("click", openServiceOrders);
         }
         moduleCards.appendChild(card);
     });
@@ -2785,6 +2863,218 @@ document.getElementById("backQuotesDashboardBtn").addEventListener("click",close
 document.getElementById("quoteSearch").addEventListener("input",()=>renderQuotes(quotesCache));
 document.getElementById("quoteStatusFilter").addEventListener("change",()=>renderQuotes(quotesCache));
 
+/* ---------- Módulo Ordens de Serviço ---------- */
+let currentServiceOrderId = null;
+let serviceOrdersCache = [];
+let serviceOrderClientsCache = [];
+let serviceOrderProductsCache = [];
+let serviceOrderServicesCache = [];
+let serviceOrderItemsDraft = [];
+
+function serviceOrderStatusLabel(status){
+    const m={OPEN:"Aberta",IN_PROGRESS:"Em andamento",WAITING:"Aguardando",COMPLETED:"Concluída",CANCELLED:"Cancelada"};
+    return m[status]||status||"—";
+}
+function serviceOrderItemTotal(item){
+    return Math.max(0,(Number(item.quantity)||0)*(Number(item.unit_price)||0)-(Number(item.discount)||0));
+}
+function serviceOrderTotals(){
+    const subtotal=serviceOrderItemsDraft.reduce((sum,x)=>sum+(Number(x.quantity)||0)*(Number(x.unit_price)||0),0);
+    const discount=serviceOrderItemsDraft.reduce((sum,x)=>sum+(Number(x.discount)||0),0);
+    return {subtotal,discount,total:Math.max(0,subtotal-discount)};
+}
+function renderServiceOrderTotals(){
+    const t=serviceOrderTotals();
+    document.getElementById("serviceOrderSubtotalDisplay").textContent=brl(t.subtotal);
+    document.getElementById("serviceOrderDiscountDisplay").textContent=brl(t.discount);
+    document.getElementById("serviceOrderTotalDisplay").textContent=brl(t.total);
+}
+function renderServiceOrderItems(){
+    const body=document.getElementById("serviceOrderItemsTableBody");
+    if(!serviceOrderItemsDraft.length){body.innerHTML='<tr><td colspan="7" class="empty">Nenhum item adicionado.</td></tr>';renderServiceOrderTotals();return;}
+    body.innerHTML=serviceOrderItemsDraft.map((x,i)=>`<tr>
+        <td>${x.item_type==="PRODUCT"?"Produto":"Serviço"}</td>
+        <td>${escapeHtml(x.description||"—")}</td>
+        <td>${Number(x.quantity||0).toLocaleString("pt-BR",{maximumFractionDigits:3})}</td>
+        <td>${brl(x.unit_price)}</td>
+        <td>${brl(x.discount)}</td>
+        <td>${brl(serviceOrderItemTotal(x))}</td>
+        <td><button class="danger small" onclick="removeServiceOrderItem(${i})">Remover</button></td>
+    </tr>`).join("");
+    renderServiceOrderTotals();
+}
+function removeServiceOrderItem(index){serviceOrderItemsDraft.splice(index,1);renderServiceOrderItems();}
+async function loadServiceOrderDependencies(){
+    const [clients,products,services]=await Promise.all([
+        supabaseClient.from("clients").select("id,name,active").eq("active",true).order("name",{ascending:true}),
+        supabaseClient.from("products").select("id,name,sale_price,active").eq("active",true).order("name",{ascending:true}),
+        supabaseClient.from("services").select("id,name,price,active").eq("active",true).order("name",{ascending:true})
+    ]);
+    serviceOrderClientsCache=clients.data||[];
+    serviceOrderProductsCache=products.data||[];
+    serviceOrderServicesCache=services.data||[];
+    const clientSelect=document.getElementById("serviceOrderClient");
+    clientSelect.innerHTML='<option value="">Selecione o cliente</option>'+serviceOrderClientsCache.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+    renderServiceOrderItemOptions();
+}
+function renderServiceOrderItemOptions(){
+    const type=document.getElementById("serviceOrderItemType").value;
+    const select=document.getElementById("serviceOrderItemSelect");
+    const list=type==="PRODUCT"?serviceOrderProductsCache:serviceOrderServicesCache;
+    select.innerHTML='<option value="">Selecione</option>'+list.map(x=>`<option value="${x.id}">${escapeHtml(x.name)}</option>`).join("");
+    updateServiceOrderItemPrice();
+}
+function updateServiceOrderItemPrice(){
+    const type=document.getElementById("serviceOrderItemType").value;
+    const id=document.getElementById("serviceOrderItemSelect").value;
+    const list=type==="PRODUCT"?serviceOrderProductsCache:serviceOrderServicesCache;
+    const item=list.find(x=>x.id===id);
+    document.getElementById("serviceOrderItemPrice").value=item?Number(type==="PRODUCT"?item.sale_price:item.price||0).toFixed(2):"";
+}
+function openServiceOrderItemModal(){
+    document.getElementById("serviceOrderItemType").value="PRODUCT";
+    document.getElementById("serviceOrderItemQuantity").value="1";
+    document.getElementById("serviceOrderItemDiscount").value="0";
+    clearMessage(document.getElementById("serviceOrderItemMessage"));
+    renderServiceOrderItemOptions();
+    document.getElementById("serviceOrderItemModal").classList.remove("hidden");
+}
+function closeServiceOrderItemModal(){document.getElementById("serviceOrderItemModal").classList.add("hidden");}
+function saveServiceOrderItem(){
+    const msg=document.getElementById("serviceOrderItemMessage");clearMessage(msg);
+    const type=document.getElementById("serviceOrderItemType").value;
+    const id=document.getElementById("serviceOrderItemSelect").value;
+    const quantity=Number(document.getElementById("serviceOrderItemQuantity").value);
+    const unitPrice=Number(document.getElementById("serviceOrderItemPrice").value);
+    const discount=Number(document.getElementById("serviceOrderItemDiscount").value)||0;
+    if(!id)return showMessage(msg,"Selecione um produto ou serviço.","error");
+    if(!quantity||quantity<=0)return showMessage(msg,"Informe uma quantidade válida.","error");
+    if(unitPrice<0)return showMessage(msg,"Informe um preço válido.","error");
+    if(discount<0||discount>quantity*unitPrice)return showMessage(msg,"Desconto inválido.","error");
+    const list=type==="PRODUCT"?serviceOrderProductsCache:serviceOrderServicesCache;
+    const item=list.find(x=>x.id===id);
+    serviceOrderItemsDraft.push({item_type:type,product_id:type==="PRODUCT"?id:null,service_id:type==="SERVICE"?id:null,description:item?.name||"Item",quantity,unit_price:unitPrice,discount});
+    closeServiceOrderItemModal();renderServiceOrderItems();
+}
+async function openServiceOrders(){
+    hideDashboardModules();
+    ["clientsPage","productsPage","servicesPage","appointmentsPage","salesPage","inventoryPage","financePage","quotesPage"].forEach(id=>document.getElementById(id)?.classList.add("hidden"));
+    document.getElementById("serviceOrdersPage").classList.remove("hidden");
+    await loadServiceOrders();
+}
+function closeServiceOrders(){document.getElementById("serviceOrdersPage").classList.add("hidden");showDashboardModules();}
+async function loadServiceOrders(){
+    const {data,error}=await supabaseClient.from("service_orders").select("*,clients(name)").order("created_at",{ascending:false});
+    if(error){document.getElementById("serviceOrdersTableBody").innerHTML=`<tr><td colspan="7" class="empty">Erro: ${escapeHtml(error.message)}</td></tr>`;return;}
+    serviceOrdersCache=data||[];renderServiceOrders(serviceOrdersCache);
+}
+function renderServiceOrders(list){
+    const term=(document.getElementById("serviceOrderSearch").value||"").toLowerCase().trim();
+    const status=document.getElementById("serviceOrderStatusFilter").value;
+    const filtered=(list||[]).filter(x=>{
+        const name=(x.clients?.name||"").toLowerCase();
+        const number=String(x.service_order_number||"").toLowerCase();
+        return (!term||name.includes(term)||number.includes(term))&& (status==="ALL"||x.status===status);
+    });
+    const body=document.getElementById("serviceOrdersTableBody");
+    if(!filtered.length){body.innerHTML='<tr><td colspan="7" class="empty">Nenhuma ordem de serviço encontrada.</td></tr>';return;}
+    body.innerHTML=filtered.map(x=>`<tr>
+        <td>#${x.service_order_number||"—"}</td>
+        <td>${formatDateBR(x.opening_date)}</td>
+        <td>${escapeHtml(x.clients?.name||"—")}</td>
+        <td>${formatDateBR(x.scheduled_date)}</td>
+        <td>${brl(x.total)}</td>
+        <td>${serviceOrderStatusLabel(x.status)}</td>
+        <td><button class="secondary small" onclick="editServiceOrder('${x.id}')">Editar</button> <button class="danger small" onclick="deleteServiceOrder('${x.id}')">Excluir</button></td>
+    </tr>`).join("");
+}
+async function openServiceOrderModal(item=null){
+    currentServiceOrderId=item?.id||null;
+    await loadServiceOrderDependencies();
+    document.getElementById("serviceOrderModalTitle").textContent=item?"Editar ordem de serviço":"Nova ordem de serviço";
+    document.getElementById("serviceOrderClient").value=item?.client_id||"";
+    document.getElementById("serviceOrderOpeningDate").value=item?.opening_date||new Date().toISOString().slice(0,10);
+    document.getElementById("serviceOrderScheduledDate").value=item?.scheduled_date||"";
+    document.getElementById("serviceOrderCompletionDate").value=item?.completion_date||"";
+    document.getElementById("serviceOrderStatus").value=item?.status||"OPEN";
+    document.getElementById("serviceOrderDescription").value=item?.description||"";
+    document.getElementById("serviceOrderDiagnosis").value=item?.diagnosis||"";
+    document.getElementById("serviceOrderSolution").value=item?.solution||"";
+    document.getElementById("serviceOrderNotes").value=item?.notes||"";
+    serviceOrderItemsDraft=[];
+    if(item?.id){
+        const {data,error}=await supabaseClient.from("service_order_items").select("*").eq("service_order_id",item.id).order("created_at",{ascending:true});
+        if(error){alert("Não foi possível carregar os itens: "+error.message);return;}
+        serviceOrderItemsDraft=(data||[]).map(x=>({id:x.id,item_type:x.product_id?"PRODUCT":"SERVICE",product_id:x.product_id,service_id:x.service_id,description:x.description,quantity:x.quantity,unit_price:x.unit_price,discount:x.discount||0}));
+    }
+    renderServiceOrderItems();clearMessage(document.getElementById("serviceOrderMessage"));document.getElementById("serviceOrderModal").classList.remove("hidden");
+}
+function closeServiceOrderModal(){document.getElementById("serviceOrderModal").classList.add("hidden");currentServiceOrderId=null;serviceOrderItemsDraft=[];}
+async function saveServiceOrder(){
+    const msg=document.getElementById("serviceOrderMessage");clearMessage(msg);
+    const clientId=document.getElementById("serviceOrderClient").value||null;
+    const openingDate=document.getElementById("serviceOrderOpeningDate").value;
+    const scheduledDate=document.getElementById("serviceOrderScheduledDate").value||null;
+    const completionDate=document.getElementById("serviceOrderCompletionDate").value||null;
+    const status=document.getElementById("serviceOrderStatus").value;
+    const description=document.getElementById("serviceOrderDescription").value.trim()||null;
+    const diagnosis=document.getElementById("serviceOrderDiagnosis").value.trim()||null;
+    const solution=document.getElementById("serviceOrderSolution").value.trim()||null;
+    const notes=document.getElementById("serviceOrderNotes").value.trim()||null;
+    const totals=serviceOrderTotals();
+    if(!clientId)return showMessage(msg,"Selecione o cliente.","error");
+    if(!openingDate)return showMessage(msg,"Informe a data de abertura.","error");
+    if(!serviceOrderItemsDraft.length)return showMessage(msg,"Adicione pelo menos um item.","error");
+    const {data:{user}}=await supabaseClient.auth.getUser();
+    const {data:profile,error:profileError}=await supabaseClient.from("profiles").select("company_id").eq("id",user?.id).single();
+    if(profileError||!profile?.company_id)return showMessage(msg,"Não foi possível identificar a empresa do usuário.","error");
+    const payload={company_id:profile.company_id,client_id:clientId,opening_date:openingDate,scheduled_date:scheduledDate,completion_date:completionDate,status,description,diagnosis,solution,subtotal:totals.subtotal,discount:totals.discount,total:totals.total,notes,updated_at:new Date().toISOString()};
+    let orderId=currentServiceOrderId;
+    if(orderId){
+        const {error}=await supabaseClient.from("service_orders").update(payload).eq("id",orderId);
+        if(error)return showMessage(msg,error.message,"error");
+        const {error:delError}=await supabaseClient.from("service_order_items").delete().eq("service_order_id",orderId);
+        if(delError)return showMessage(msg,delError.message,"error");
+    }else{
+        payload.created_by=user?.id||null;
+        const {data,error}=await supabaseClient.from("service_orders").insert(payload).select("id").single();
+        if(error)return showMessage(msg,error.message,"error");
+        orderId=data.id;
+    }
+    const itemsPayload=serviceOrderItemsDraft.map(x=>({service_order_id:orderId,product_id:x.product_id||null,service_id:x.service_id||null,description:x.description,quantity:x.quantity,unit_price:x.unit_price,discount:x.discount||0,total:serviceOrderItemTotal(x)}));
+    const {error:itemError}=await supabaseClient.from("service_order_items").insert(itemsPayload);
+    if(itemError){if(!currentServiceOrderId)await supabaseClient.from("service_orders").delete().eq("id",orderId);return showMessage(msg,itemError.message,"error");}
+    closeServiceOrderModal();await loadServiceOrders();
+}
+async function editServiceOrder(id){const item=serviceOrdersCache.find(x=>x.id===id);if(item)await openServiceOrderModal(item);}
+async function deleteServiceOrder(id){
+    const item=serviceOrdersCache.find(x=>x.id===id);if(!item)return;
+    if(!confirm(`Excluir a OS #${item.service_order_number||""}?`))return;
+    const {error}=await supabaseClient.from("service_orders").delete().eq("id",id);
+    if(error){alert("Não foi possível excluir: "+error.message);return;}
+    await loadServiceOrders();
+}
+
+document.getElementById("newServiceOrderBtn").addEventListener("click",()=>openServiceOrderModal());
+document.getElementById("closeServiceOrderModal").addEventListener("click",closeServiceOrderModal);
+document.getElementById("cancelServiceOrderBtn").addEventListener("click",closeServiceOrderModal);
+document.getElementById("saveServiceOrderBtn").addEventListener("click",saveServiceOrder);
+document.getElementById("addServiceOrderItemBtn").addEventListener("click",openServiceOrderItemModal);
+document.getElementById("closeServiceOrderItemModal").addEventListener("click",closeServiceOrderItemModal);
+document.getElementById("cancelServiceOrderItemBtn").addEventListener("click",closeServiceOrderItemModal);
+document.getElementById("saveServiceOrderItemBtn").addEventListener("click",saveServiceOrderItem);
+document.getElementById("serviceOrderItemType").addEventListener("change",renderServiceOrderItemOptions);
+document.getElementById("serviceOrderItemSelect").addEventListener("change",updateServiceOrderItemPrice);
+document.getElementById("backServiceOrdersDashboardBtn").addEventListener("click",closeServiceOrders);
+document.getElementById("serviceOrderSearch").addEventListener("input",()=>renderServiceOrders(serviceOrdersCache));
+document.getElementById("serviceOrderStatusFilter").addEventListener("change",()=>renderServiceOrders(serviceOrdersCache));
+
+document.getElementById("serviceOrderStatus").addEventListener("change",()=>{
+    const status=document.getElementById("serviceOrderStatus").value;
+    const field=document.getElementById("serviceOrderCompletionDate");
+    if(status==="COMPLETED"&&!field.value)field.value=new Date().toISOString().slice(0,10);
+});
+
 /* ---------- Módulo Financeiro ---------- */
 let currentFinanceId = null;
 let financeCache = [];
@@ -3205,6 +3495,7 @@ function showDashboardModules(){
     document.getElementById("inventoryPage").classList.add("hidden");
     document.getElementById("financePage").classList.add("hidden");
     document.getElementById("quotesPage").classList.add("hidden");
+    document.getElementById("serviceOrdersPage").classList.add("hidden");
 }
 
 async function openProducts(){
