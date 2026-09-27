@@ -314,6 +314,90 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
             </div>
 
 
+
+            <!-- MÓDULO SERVIÇOS -->
+            <div class="module-page hidden" id="servicesPage">
+                <div class="module-header">
+                    <div>
+                        <button class="back-btn" id="backServicesDashboardBtn">← Dashboard</button>
+                        <h2 style="margin:14px 0 5px">Serviços</h2>
+                        <div class="userinfo">Catálogo de serviços, preços e duração.</div>
+                    </div>
+                    <button class="primary top-action" id="newServiceBtn">+ Novo serviço</button>
+                </div>
+
+                <div class="toolbar">
+                    <input id="serviceSearch" type="search" placeholder="Pesquisar por nome ou descrição...">
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Serviço</th>
+                                <th>Categoria</th>
+                                <th>Preço</th>
+                                <th>Duração</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="servicesTableBody">
+                            <tr><td colspan="6" class="empty">Carregando serviços...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- FORMULÁRIO SERVIÇO -->
+            <div class="modal hidden" id="serviceModal">
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <div>
+                            <h3 id="serviceModalTitle">Novo serviço</h3>
+                            <div class="userinfo">Os dados serão salvos diretamente no Supabase.</div>
+                        </div>
+                        <button class="close-btn" id="closeServiceModal">×</button>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="field full">
+                            <label for="serviceName">Nome *</label>
+                            <input id="serviceName" type="text" placeholder="Nome do serviço">
+                        </div>
+
+                        <div class="field">
+                            <label for="serviceCategory">Categoria</label>
+                            <select id="serviceCategory">
+                                <option value="">Sem categoria</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="servicePrice">Preço</label>
+                            <input id="servicePrice" type="number" min="0" step="0.01" placeholder="0,00">
+                        </div>
+
+                        <div class="field">
+                            <label for="serviceDuration">Duração (minutos)</label>
+                            <input id="serviceDuration" type="number" min="1" step="1" value="30">
+                        </div>
+
+                        <div class="field full">
+                            <label for="serviceDescription">Descrição</label>
+                            <textarea id="serviceDescription" rows="4" placeholder="Descrição do serviço"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button class="secondary" id="cancelServiceBtn">Cancelar</button>
+                        <button class="primary" id="saveServiceBtn">Salvar serviço</button>
+                    </div>
+
+                    <div class="message" id="serviceMessage"></div>
+                </div>
+            </div>
+
             <!-- MÓDULO PRODUTOS -->
             <div class="module-page hidden" id="productsPage">
                 <div class="module-header">
@@ -821,6 +905,9 @@ async function loadDashboard(){
         if(module.code === "PRODUCTS"){
             card.addEventListener("click", openProducts);
         }
+        if(module.code === "SERVICES"){
+            card.addEventListener("click", openServices);
+        }
         moduleCards.appendChild(card);
     });
 
@@ -845,6 +932,240 @@ function escapeHtml(value){
 }
 
 
+
+
+/* ---------- Módulo Serviços ---------- */
+let currentServiceId = null;
+let servicesCache = [];
+let serviceCategoriesCache = [];
+
+async function openServices(){
+    hideDashboardModules();
+    document.getElementById("clientsPage").classList.add("hidden");
+    document.getElementById("productsPage").classList.add("hidden");
+    document.getElementById("servicesPage").classList.remove("hidden");
+    await loadServiceCategories();
+    await loadServices();
+}
+
+function closeServices(){
+    document.getElementById("servicesPage").classList.add("hidden");
+    showDashboardModules();
+}
+
+async function loadServiceCategories(){
+    const { data, error } = await supabaseClient
+        .from("service_categories")
+        .select("id,name")
+        .order("name", { ascending:true });
+
+    if(error){
+        serviceCategoriesCache = [];
+        return;
+    }
+
+    serviceCategoriesCache = data || [];
+    const select = document.getElementById("serviceCategory");
+    select.innerHTML = '<option value="">Sem categoria</option>';
+
+    serviceCategoriesCache.forEach(category => {
+        const option = document.createElement("option");
+        option.value = category.id;
+        option.textContent = category.name;
+        select.appendChild(option);
+    });
+}
+
+async function loadServices(){
+    const tbody = document.getElementById("servicesTableBody");
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">Carregando serviços...</td></tr>';
+
+    const { data, error } = await supabaseClient
+        .from("services")
+        .select("id,name,category_id,description,price,duration_minutes,active")
+        .order("name", { ascending:true });
+
+    if(error){
+        tbody.innerHTML = `<tr><td colspan="6" class="empty">Erro ao carregar serviços: ${escapeHtml(error.message)}</td></tr>`;
+        return;
+    }
+
+    servicesCache = data || [];
+    renderServices(servicesCache);
+}
+
+function renderServices(list){
+    const tbody = document.getElementById("servicesTableBody");
+
+    if(!list.length){
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum serviço cadastrado.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = "";
+
+    list.forEach(service => {
+        const category = serviceCategoriesCache.find(c => c.id === service.category_id);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><strong>${escapeHtml(service.name || "")}</strong><br>
+                <span class="userinfo">${escapeHtml(service.description || "")}</span>
+            </td>
+            <td>${escapeHtml(category?.name || "—")}</td>
+            <td>R$ ${Number(service.price || 0).toFixed(2).replace(".", ",")}</td>
+            <td>${Number(service.duration_minutes || 0)} min</td>
+            <td><span class="badge">${service.active ? "Ativo" : "Inativo"}</span></td>
+            <td>
+                <button class="action-btn edit-service" data-id="${service.id}">Editar</button>
+                <button class="action-btn delete delete-service" data-id="${service.id}">Excluir</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll(".edit-service").forEach(btn => {
+        btn.addEventListener("click", () => editService(btn.dataset.id));
+    });
+
+    tbody.querySelectorAll(".delete-service").forEach(btn => {
+        btn.addEventListener("click", () => deleteService(btn.dataset.id));
+    });
+}
+
+function openServiceModal(service=null){
+    currentServiceId = service?.id || null;
+    document.getElementById("serviceModalTitle").textContent =
+        service ? "Editar serviço" : "Novo serviço";
+
+    document.getElementById("serviceName").value = service?.name || "";
+    document.getElementById("serviceCategory").value = service?.category_id || "";
+    document.getElementById("servicePrice").value = service?.price ?? "";
+    document.getElementById("serviceDuration").value = service?.duration_minutes ?? 30;
+    document.getElementById("serviceDescription").value = service?.description || "";
+
+    clearMessage(document.getElementById("serviceMessage"));
+    document.getElementById("serviceModal").classList.remove("hidden");
+}
+
+function closeServiceModal(){
+    document.getElementById("serviceModal").classList.add("hidden");
+    currentServiceId = null;
+}
+
+async function editService(id){
+    const { data, error } = await supabaseClient
+        .from("services")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+    if(error){
+        alert("Não foi possível carregar o serviço: " + error.message);
+        return;
+    }
+
+    openServiceModal(data);
+}
+
+async function saveService(){
+    const message = document.getElementById("serviceMessage");
+    clearMessage(message);
+
+    const name = document.getElementById("serviceName").value.trim();
+
+    if(!name){
+        showMessage(message, "Informe o nome do serviço.", "error");
+        return;
+    }
+
+    const duration = Number(document.getElementById("serviceDuration").value || 30);
+    if(duration <= 0){
+        showMessage(message, "A duração deve ser maior que zero.", "error");
+        return;
+    }
+
+    const payload = {
+        name,
+        category_id: document.getElementById("serviceCategory").value || null,
+        description: document.getElementById("serviceDescription").value.trim() || null,
+        price: Number(document.getElementById("servicePrice").value || 0),
+        duration_minutes: duration,
+        updated_at: new Date().toISOString()
+    };
+
+    let result;
+
+    if(currentServiceId){
+        result = await supabaseClient
+            .from("services")
+            .update(payload)
+            .eq("id", currentServiceId);
+    }else{
+        const { data: { user } } = await supabaseClient.auth.getUser();
+
+        const { data: profile, error: profileError } = await supabaseClient
+            .from("profiles")
+            .select("company_id")
+            .eq("id", user.id)
+            .single();
+
+        if(profileError || !profile?.company_id){
+            showMessage(message, "Não foi possível identificar a empresa do usuário.", "error");
+            return;
+        }
+
+        payload.company_id = profile.company_id;
+        result = await supabaseClient.from("services").insert(payload);
+    }
+
+    if(result.error){
+        showMessage(message, result.error.message, "error");
+        return;
+    }
+
+    closeServiceModal();
+    await loadServices();
+}
+
+async function deleteService(id){
+    const service = servicesCache.find(s => s.id === id);
+    if(!service) return;
+
+    if(!confirm(`Excluir o serviço "${service.name}"?`)) return;
+
+    const { error } = await supabaseClient
+        .from("services")
+        .delete()
+        .eq("id", id);
+
+    if(error){
+        alert("Não foi possível excluir: " + error.message);
+        return;
+    }
+
+    await loadServices();
+}
+
+document.getElementById("newServiceBtn").addEventListener("click", async () => {
+    await loadServiceCategories();
+    openServiceModal();
+});
+document.getElementById("closeServiceModal").addEventListener("click", closeServiceModal);
+document.getElementById("cancelServiceBtn").addEventListener("click", closeServiceModal);
+document.getElementById("saveServiceBtn").addEventListener("click", saveService);
+document.getElementById("backServicesDashboardBtn").addEventListener("click", closeServices);
+
+document.getElementById("serviceSearch").addEventListener("input", (event) => {
+    const term = event.target.value.toLowerCase().trim();
+
+    const filtered = servicesCache.filter(service =>
+        (service.name || "").toLowerCase().includes(term) ||
+        (service.description || "").toLowerCase().includes(term)
+    );
+
+    renderServices(filtered);
+});
 
 /* ---------- Módulo Produtos ---------- */
 let currentProductId = null;
