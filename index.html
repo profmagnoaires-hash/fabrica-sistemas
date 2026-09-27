@@ -153,6 +153,14 @@ td{color:#334155}
 textarea{width:100%;resize:vertical;padding:13px 14px;border:1px solid #cbd5e1;border-radius:12px;font:inherit;outline:none}
 textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+select{
+    width:100%;padding:14px 15px;border:1px solid #cbd5e1;
+    border-radius:12px;font-size:15px;outline:none;background:white;
+}
+select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.stock-low{color:#b91c1c;font-weight:800}
+.stock-ok{color:#166534;font-weight:750}
+
 .modal-actions button{width:auto;margin:0}
 @media(max-width:650px){
     .module-header{align-items:stretch;flex-direction:column}
@@ -302,6 +310,121 @@ textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
                             <tr><td colspan="6" class="empty">Carregando clientes...</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+
+            <!-- MÓDULO PRODUTOS -->
+            <div class="module-page hidden" id="productsPage">
+                <div class="module-header">
+                    <div>
+                        <button class="back-btn" id="backProductsDashboardBtn">← Dashboard</button>
+                        <h2 style="margin:14px 0 5px">Produtos</h2>
+                        <div class="userinfo">Produtos, preços e controle básico de estoque.</div>
+                    </div>
+                    <button class="primary top-action" id="newProductBtn">+ Novo produto</button>
+                </div>
+
+                <div class="toolbar">
+                    <input id="productSearch" type="search" placeholder="Pesquisar por nome, código ou código de barras...">
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Código</th>
+                                <th>Categoria</th>
+                                <th>Venda</th>
+                                <th>Estoque</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <tr><td colspan="7" class="empty">Carregando produtos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- FORMULÁRIO PRODUTO -->
+            <div class="modal hidden" id="productModal">
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <div>
+                            <h3 id="productModalTitle">Novo produto</h3>
+                            <div class="userinfo">Os dados serão salvos diretamente no Supabase.</div>
+                        </div>
+                        <button class="close-btn" id="closeProductModal">×</button>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="field full">
+                            <label for="productName">Nome *</label>
+                            <input id="productName" type="text" placeholder="Nome do produto">
+                        </div>
+
+                        <div class="field">
+                            <label for="productCode">Código</label>
+                            <input id="productCode" type="text" placeholder="Ex.: CAM-001">
+                        </div>
+
+                        <div class="field">
+                            <label for="productBarcode">Código de barras</label>
+                            <input id="productBarcode" type="text" placeholder="Código de barras">
+                        </div>
+
+                        <div class="field">
+                            <label for="productCategory">Categoria</label>
+                            <select id="productCategory">
+                                <option value="">Sem categoria</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="productUnit">Unidade</label>
+                            <input id="productUnit" type="text" value="UN" maxlength="10" placeholder="UN">
+                        </div>
+
+                        <div class="field">
+                            <label for="productCost">Preço de custo</label>
+                            <input id="productCost" type="number" min="0" step="0.01" placeholder="0,00">
+                        </div>
+
+                        <div class="field">
+                            <label for="productSale">Preço de venda</label>
+                            <input id="productSale" type="number" min="0" step="0.01" placeholder="0,00">
+                        </div>
+
+                        <div class="field">
+                            <label for="productStock">Estoque atual</label>
+                            <input id="productStock" type="number" min="0" step="0.001" placeholder="0">
+                        </div>
+
+                        <div class="field">
+                            <label for="productMinimumStock">Estoque mínimo</label>
+                            <input id="productMinimumStock" type="number" min="0" step="0.001" placeholder="0">
+                        </div>
+
+                        <div class="field">
+                            <label for="productSupplier">Fornecedor</label>
+                            <input id="productSupplier" type="text" placeholder="Fornecedor">
+                        </div>
+
+                        <div class="field full">
+                            <label for="productDescription">Descrição</label>
+                            <textarea id="productDescription" rows="3" placeholder="Descrição do produto"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button class="secondary" id="cancelProductBtn">Cancelar</button>
+                        <button class="primary" id="saveProductBtn">Salvar produto</button>
+                    </div>
+
+                    <div class="message" id="productMessage"></div>
                 </div>
             </div>
 
@@ -695,6 +818,9 @@ async function loadDashboard(){
         if(module.code === "CLIENTS"){
             card.addEventListener("click", openClients);
         }
+        if(module.code === "PRODUCTS"){
+            card.addEventListener("click", openProducts);
+        }
         moduleCards.appendChild(card);
     });
 
@@ -719,6 +845,257 @@ function escapeHtml(value){
 }
 
 
+
+/* ---------- Módulo Produtos ---------- */
+let currentProductId = null;
+let productsCache = [];
+let productCategoriesCache = [];
+
+function hideDashboardModules(){
+    document.getElementById("moduleCards").classList.add("hidden");
+    document.getElementById("moduleCards").parentElement.querySelector(".status").classList.add("hidden");
+}
+
+function showDashboardModules(){
+    document.getElementById("moduleCards").classList.remove("hidden");
+    document.getElementById("moduleCards").parentElement.querySelector(".status").classList.remove("hidden");
+    document.getElementById("clientsPage").classList.add("hidden");
+    document.getElementById("productsPage").classList.add("hidden");
+}
+
+async function openProducts(){
+    hideDashboardModules();
+    document.getElementById("clientsPage").classList.add("hidden");
+    document.getElementById("productsPage").classList.remove("hidden");
+    await loadProductCategories();
+    await loadProducts();
+}
+
+function closeProducts(){
+    document.getElementById("productsPage").classList.add("hidden");
+    showDashboardModules();
+}
+
+async function loadProductCategories(){
+    const { data, error } = await supabaseClient
+        .from("product_categories")
+        .select("id,name")
+        .order("name", { ascending:true });
+
+    if(error){
+        productCategoriesCache = [];
+        return;
+    }
+
+    productCategoriesCache = data || [];
+    const select = document.getElementById("productCategory");
+    select.innerHTML = '<option value="">Sem categoria</option>';
+
+    productCategoriesCache.forEach(category => {
+        const option = document.createElement("option");
+        option.value = category.id;
+        option.textContent = category.name;
+        select.appendChild(option);
+    });
+}
+
+async function loadProducts(){
+    const tbody = document.getElementById("productsTableBody");
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Carregando produtos...</td></tr>';
+
+    const { data, error } = await supabaseClient
+        .from("products")
+        .select("id,name,code,barcode,category_id,cost_price,sale_price,stock,minimum_stock,unit,supplier,description,active")
+        .order("name", { ascending:true });
+
+    if(error){
+        tbody.innerHTML = `<tr><td colspan="7" class="empty">Erro ao carregar produtos: ${escapeHtml(error.message)}</td></tr>`;
+        return;
+    }
+
+    productsCache = data || [];
+    renderProducts(productsCache);
+}
+
+function renderProducts(list){
+    const tbody = document.getElementById("productsTableBody");
+
+    if(!list.length){
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">Nenhum produto cadastrado.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = "";
+
+    list.forEach(product => {
+        const category = productCategoriesCache.find(c => c.id === product.category_id);
+        const low = Number(product.stock || 0) <= Number(product.minimum_stock || 0);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><strong>${escapeHtml(product.name || "")}</strong></td>
+            <td>${escapeHtml(product.code || "—")}</td>
+            <td>${escapeHtml(category?.name || "—")}</td>
+            <td>R$ ${Number(product.sale_price || 0).toFixed(2).replace(".", ",")}</td>
+            <td class="${low ? "stock-low" : "stock-ok"}">${Number(product.stock || 0)} ${escapeHtml(product.unit || "UN")}</td>
+            <td><span class="badge">${product.active ? "Ativo" : "Inativo"}</span></td>
+            <td>
+                <button class="action-btn edit-product" data-id="${product.id}">Editar</button>
+                <button class="action-btn delete delete-product" data-id="${product.id}">Excluir</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll(".edit-product").forEach(btn => {
+        btn.addEventListener("click", () => editProduct(btn.dataset.id));
+    });
+
+    tbody.querySelectorAll(".delete-product").forEach(btn => {
+        btn.addEventListener("click", () => deleteProduct(btn.dataset.id));
+    });
+}
+
+function openProductModal(product=null){
+    currentProductId = product?.id || null;
+    document.getElementById("productModalTitle").textContent =
+        product ? "Editar produto" : "Novo produto";
+
+    document.getElementById("productName").value = product?.name || "";
+    document.getElementById("productCode").value = product?.code || "";
+    document.getElementById("productBarcode").value = product?.barcode || "";
+    document.getElementById("productCategory").value = product?.category_id || "";
+    document.getElementById("productUnit").value = product?.unit || "UN";
+    document.getElementById("productCost").value = product?.cost_price ?? "";
+    document.getElementById("productSale").value = product?.sale_price ?? "";
+    document.getElementById("productStock").value = product?.stock ?? "";
+    document.getElementById("productMinimumStock").value = product?.minimum_stock ?? "";
+    document.getElementById("productSupplier").value = product?.supplier || "";
+    document.getElementById("productDescription").value = product?.description || "";
+    clearMessage(document.getElementById("productMessage"));
+    document.getElementById("productModal").classList.remove("hidden");
+}
+
+function closeProductModal(){
+    document.getElementById("productModal").classList.add("hidden");
+    currentProductId = null;
+}
+
+async function editProduct(id){
+    const { data, error } = await supabaseClient
+        .from("products")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+    if(error){
+        alert("Não foi possível carregar o produto: " + error.message);
+        return;
+    }
+
+    openProductModal(data);
+}
+
+async function saveProduct(){
+    const message = document.getElementById("productMessage");
+    clearMessage(message);
+
+    const name = document.getElementById("productName").value.trim();
+
+    if(!name){
+        showMessage(message, "Informe o nome do produto.", "error");
+        return;
+    }
+
+    const payload = {
+        name,
+        code: document.getElementById("productCode").value.trim() || null,
+        barcode: document.getElementById("productBarcode").value.trim() || null,
+        category_id: document.getElementById("productCategory").value || null,
+        unit: document.getElementById("productUnit").value.trim() || "UN",
+        cost_price: Number(document.getElementById("productCost").value || 0),
+        sale_price: Number(document.getElementById("productSale").value || 0),
+        stock: Number(document.getElementById("productStock").value || 0),
+        minimum_stock: Number(document.getElementById("productMinimumStock").value || 0),
+        supplier: document.getElementById("productSupplier").value.trim() || null,
+        description: document.getElementById("productDescription").value.trim() || null,
+        updated_at: new Date().toISOString()
+    };
+
+    let result;
+
+    if(currentProductId){
+        result = await supabaseClient
+            .from("products")
+            .update(payload)
+            .eq("id", currentProductId);
+    }else{
+        const { data: { user } } = await supabaseClient.auth.getUser();
+
+        const { data: profile, error: profileError } = await supabaseClient
+            .from("profiles")
+            .select("company_id")
+            .eq("id", user.id)
+            .single();
+
+        if(profileError || !profile?.company_id){
+            showMessage(message, "Não foi possível identificar a empresa do usuário.", "error");
+            return;
+        }
+
+        payload.company_id = profile.company_id;
+        result = await supabaseClient.from("products").insert(payload);
+    }
+
+    if(result.error){
+        showMessage(message, result.error.message, "error");
+        return;
+    }
+
+    closeProductModal();
+    await loadProducts();
+}
+
+async function deleteProduct(id){
+    const product = productsCache.find(p => p.id === id);
+    if(!product) return;
+
+    if(!confirm(`Excluir o produto "${product.name}"?`)) return;
+
+    const { error } = await supabaseClient
+        .from("products")
+        .delete()
+        .eq("id", id);
+
+    if(error){
+        alert("Não foi possível excluir: " + error.message);
+        return;
+    }
+
+    await loadProducts();
+}
+
+document.getElementById("newProductBtn").addEventListener("click", async () => {
+    await loadProductCategories();
+    openProductModal();
+});
+document.getElementById("closeProductModal").addEventListener("click", closeProductModal);
+document.getElementById("cancelProductBtn").addEventListener("click", closeProductModal);
+document.getElementById("saveProductBtn").addEventListener("click", saveProduct);
+document.getElementById("backProductsDashboardBtn").addEventListener("click", closeProducts);
+
+document.getElementById("productSearch").addEventListener("input", (event) => {
+    const term = event.target.value.toLowerCase().trim();
+
+    const filtered = productsCache.filter(product =>
+        (product.name || "").toLowerCase().includes(term) ||
+        (product.code || "").toLowerCase().includes(term) ||
+        (product.barcode || "").toLowerCase().includes(term)
+    );
+
+    renderProducts(filtered);
+});
+
 /* ---------- Módulo Clientes ---------- */
 let currentClientId = null;
 let clientsCache = [];
@@ -732,8 +1109,7 @@ function openClients(){
 
 function closeClients(){
     document.getElementById("clientsPage").classList.add("hidden");
-    document.getElementById("moduleCards").classList.remove("hidden");
-    document.getElementById("moduleCards").parentElement.querySelector(".status").classList.remove("hidden");
+    showDashboardModules();
 }
 
 async function loadClients(){
