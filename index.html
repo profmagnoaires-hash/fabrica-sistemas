@@ -1267,6 +1267,11 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
                             <label for="clientNotes">Observações</label>
                             <textarea id="clientNotes" rows="3" placeholder="Observações sobre o cliente"></textarea>
                         </div>
+
+                        <div class="field full hidden" id="clientCustomFieldsSection">
+                            <div style="font-weight:800;font-size:16px;margin:8px 0 12px">Campos personalizados</div>
+                            <div id="clientCustomFieldsContainer" class="form-grid"></div>
+                        </div>
                     </div>
 
                     <div class="modal-actions">
@@ -3898,7 +3903,84 @@ function renderClients(list){
     });
 }
 
-function openClientModal(client=null){
+let clientCustomFieldsCache = [];
+let clientCustomFieldValuesCache = {};
+
+async function loadClientCustomFields(clientId=null){
+    const section = document.getElementById("clientCustomFieldsSection");
+    const container = document.getElementById("clientCustomFieldsContainer");
+    if(!section || !container) return;
+
+    container.innerHTML = "";
+    clientCustomFieldsCache = [];
+    clientCustomFieldValuesCache = {};
+
+    const { data: fields, error } = await supabaseClient
+        .from("custom_fields")
+        .select("*")
+        .eq("module_code", "CLIENTS")
+        .eq("active", true)
+        .eq("visible", true)
+        .order("sort_order", {ascending:true})
+        .order("field_label", {ascending:true});
+
+    if(error){
+        console.warn("Erro ao carregar campos personalizados de clientes:", error.message);
+        section.classList.add("hidden");
+        return;
+    }
+
+    clientCustomFieldsCache = fields || [];
+
+    if(clientId && clientCustomFieldsCache.length){
+        const { data: values, error: valuesError } = await supabaseClient
+            .from("custom_field_values")
+            .select("custom_field_id,value_text")
+            .eq("record_id", clientId);
+
+        if(!valuesError){
+            (values || []).forEach(v => { clientCustomFieldValuesCache[v.custom_field_id] = v.value_text ?? ""; });
+        }
+    }
+
+    if(!clientCustomFieldsCache.length){
+        section.classList.add("hidden");
+        return;
+    }
+
+    section.classList.remove("hidden");
+
+    clientCustomFieldsCache.forEach(field => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "field";
+        const inputId = `clientCustom_${field.id}`;
+        const requiredMark = field.required ? " *" : "";
+        let control = "";
+        const value = clientCustomFieldValuesCache[field.id] || "";
+
+        if(field.field_type === "TEXTAREA"){
+            control = `<textarea id="${inputId}" data-custom-field-id="${field.id}" data-required="${field.required}" rows="3" placeholder="${escapeHtml(field.field_label)}">${escapeHtml(value)}</textarea>`;
+        } else if(field.field_type === "BOOLEAN"){
+            control = `<label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input id="${inputId}" data-custom-field-id="${field.id}" data-required="${field.required}" type="checkbox" ${String(value).toLowerCase()==="true" ? "checked" : ""}> Sim</label>`;
+        } else if(field.field_type === "SELECT"){
+            const opts = Array.isArray(field.options) ? field.options : [];
+            control = `<select id="${inputId}" data-custom-field-id="${field.id}" data-required="${field.required}"><option value="">Selecione...</option>${opts.map(o=>`<option value="${escapeHtml(o)}" ${String(value)===String(o)?"selected":""}>${escapeHtml(o)}</option>`).join("")}</select>`;
+        } else {
+            let type = "text";
+            if(field.field_type === "NUMBER") type="number";
+            if(field.field_type === "DATE") type="date";
+            if(field.field_type === "PHONE") type="tel";
+            if(field.field_type === "EMAIL") type="email";
+            if(field.field_type === "CURRENCY") type="number";
+            control = `<input id="${inputId}" data-custom-field-id="${field.id}" data-required="${field.required}" type="${type}" ${field.field_type === "CURRENCY" ? 'step="0.01"' : ''} value="${escapeHtml(value)}" placeholder="${escapeHtml(field.field_label)}">`;
+        }
+
+        wrapper.innerHTML = `<label for="${inputId}">${escapeHtml(field.field_label)}${requiredMark}</label>${control}`;
+        container.appendChild(wrapper);
+    });
+}
+
+async function openClientModal(client=null){
     currentClientId = client?.id || null;
     document.getElementById("clientModalTitle").textContent =
         client ? "Editar cliente" : "Novo cliente";
@@ -3915,6 +3997,7 @@ function openClientModal(client=null){
     clearMessage(document.getElementById("clientMessage"));
 
     document.getElementById("clientModal").classList.remove("hidden");
+    await loadClientCustomFields(currentClientId);
 }
 
 function closeClientModal(){
@@ -3964,34 +4047,79 @@ async function saveClient(){
         updated_at: new Date().toISOString()
     };
 
-    let result;
+    // Validar campos personalizados ativos e visíveis
+    for(const field of clientCustomFieldsCache){
+        const el = document.getElementById(`clientCustom_${field.id}`);
+        if(field.required){
+            const val = field.field_type === "BOOLEAN" ? (el?.checked ? "true" : "false") : (el?.value || "").trim();
+            if(!val || (field.field_type === "BOOLEAN" && !el.checked)){
+                showMessage(message, `Preencha o campo obrigatório: ${field.field_label}.`, "error");
+                el?.focus();
+                return;
+            }
+        }
+    }
+
+    let companyId = null;
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if(!user){
+        showMessage(message, "Sessão expirada. Faça login novamente.", "error");
+        return;
+    }
+    const { data: profile, error: profileError } = await supabaseClient
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single();
+    if(profileError || !profile?.company_id){
+        showMessage(message, "Não foi possível identificar a empresa do usuário.", "error");
+        return;
+    }
+    companyId = profile.company_id;
+
+    let clientId = currentClientId;
 
     if(currentClientId){
-        result = await supabaseClient
+        const result = await supabaseClient
             .from("clients")
             .update(payload)
             .eq("id", currentClientId);
-    }else{
-        const { data: { user } } = await supabaseClient.auth.getUser();
-
-        const { data: profile, error: profileError } = await supabaseClient
-            .from("profiles")
-            .select("company_id")
-            .eq("id", user.id)
-            .single();
-
-        if(profileError || !profile?.company_id){
-            showMessage(message, "Não foi possível identificar a empresa do usuário.", "error");
+        if(result.error){
+            showMessage(message, result.error.message, "error");
             return;
         }
-
-        payload.company_id = profile.company_id;
-        result = await supabaseClient.from("clients").insert(payload);
+    }else{
+        payload.company_id = companyId;
+        const result = await supabaseClient.from("clients").insert(payload).select("id").single();
+        if(result.error){
+            showMessage(message, result.error.message, "error");
+            return;
+        }
+        clientId = result.data.id;
     }
 
-    if(result.error){
-        showMessage(message, result.error.message, "error");
-        return;
+    // Salvar os valores personalizados
+    for(const field of clientCustomFieldsCache){
+        const el = document.getElementById(`clientCustom_${field.id}`);
+        if(!el) continue;
+        let value = "";
+        if(field.field_type === "BOOLEAN") value = el.checked ? "true" : "false";
+        else value = el.value ?? "";
+
+        const { error: valueError } = await supabaseClient
+            .from("custom_field_values")
+            .upsert({
+                company_id: companyId,
+                custom_field_id: field.id,
+                record_id: clientId,
+                value_text: String(value),
+                updated_at: new Date().toISOString()
+            }, { onConflict: "custom_field_id,record_id" });
+
+        if(valueError){
+            showMessage(message, `Cliente salvo, mas não foi possível salvar o campo ${field.field_label}: ${valueError.message}`, "error");
+            return;
+        }
     }
 
     closeClientModal();
