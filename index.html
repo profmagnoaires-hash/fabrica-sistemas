@@ -1200,6 +1200,11 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
                             <label for="productDescription">Descrição</label>
                             <textarea id="productDescription" rows="3" placeholder="Descrição do produto"></textarea>
                         </div>
+
+                        <div class="field full hidden" id="productCustomFieldsSection">
+                            <div style="font-weight:800;font-size:16px;margin:8px 0 12px">Campos personalizados</div>
+                            <div id="productCustomFieldsContainer" class="form-grid"></div>
+                        </div>
                     </div>
 
                     <div class="modal-actions">
@@ -1967,6 +1972,7 @@ async function saveAppointment(){
             return;
         }
 
+        productCompanyId = profile.company_id;
         payload.company_id = profile.company_id;
         payload.created_by = user.id;
 
@@ -3694,7 +3700,86 @@ function renderProducts(list){
     });
 }
 
-function openProductModal(product=null){
+let productCustomFieldsCache = [];
+let productCustomFieldValuesCache = {};
+
+async function loadProductCustomFields(productId=null){
+    const section = document.getElementById("productCustomFieldsSection");
+    const container = document.getElementById("productCustomFieldsContainer");
+    if(!section || !container) return;
+
+    container.innerHTML = "";
+    productCustomFieldsCache = [];
+    productCustomFieldValuesCache = {};
+
+    const { data: fields, error } = await supabaseClient
+        .from("custom_fields")
+        .select("*")
+        .eq("module_code", "PRODUCTS")
+        .eq("active", true)
+        .eq("visible", true)
+        .order("sort_order", {ascending:true})
+        .order("field_label", {ascending:true});
+
+    if(error){
+        console.warn("Erro ao carregar campos personalizados de produtos:", error.message);
+        section.classList.add("hidden");
+        return;
+    }
+
+    productCustomFieldsCache = fields || [];
+
+    if(productId && productCustomFieldsCache.length){
+        const { data: values, error: valuesError } = await supabaseClient
+            .from("custom_field_values")
+            .select("custom_field_id,value_text")
+            .eq("record_id", productId);
+
+        if(!valuesError){
+            (values || []).forEach(v => {
+                productCustomFieldValuesCache[v.custom_field_id] = v.value_text ?? "";
+            });
+        }
+    }
+
+    if(!productCustomFieldsCache.length){
+        section.classList.add("hidden");
+        return;
+    }
+
+    section.classList.remove("hidden");
+
+    productCustomFieldsCache.forEach(field => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "field";
+        const inputId = `productCustom_${field.id}`;
+        const requiredMark = field.required ? " *" : "";
+        let control = "";
+        const value = productCustomFieldValuesCache[field.id] || "";
+
+        if(field.field_type === "TEXTAREA"){
+            control = `<textarea id="${inputId}" data-custom-field-id="${field.id}" rows="3" placeholder="${escapeHtml(field.field_label)}">${escapeHtml(value)}</textarea>`;
+        } else if(field.field_type === "BOOLEAN"){
+            control = `<label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input id="${inputId}" data-custom-field-id="${field.id}" type="checkbox" ${String(value).toLowerCase()==="true" ? "checked" : ""}> Sim</label>`;
+        } else if(field.field_type === "SELECT"){
+            const opts = Array.isArray(field.options) ? field.options : [];
+            control = `<select id="${inputId}" data-custom-field-id="${field.id}"><option value="">Selecione...</option>${opts.map(o=>`<option value="${escapeHtml(o)}" ${String(value)===String(o)?"selected":""}>${escapeHtml(o)}</option>`).join("")}</select>`;
+        } else {
+            let type = "text";
+            if(field.field_type === "NUMBER") type="number";
+            if(field.field_type === "DATE") type="date";
+            if(field.field_type === "PHONE") type="tel";
+            if(field.field_type === "EMAIL") type="email";
+            if(field.field_type === "CURRENCY") type="number";
+            control = `<input id="${inputId}" data-custom-field-id="${field.id}" type="${type}" ${field.field_type === "CURRENCY" ? 'step="0.01"' : ''} value="${escapeHtml(value)}" placeholder="${escapeHtml(field.field_label)}">`;
+        }
+
+        wrapper.innerHTML = `<label for="${inputId}">${escapeHtml(field.field_label)}${requiredMark}</label>${control}`;
+        container.appendChild(wrapper);
+    });
+}
+
+async function openProductModal(product=null){
     currentProductId = product?.id || null;
     document.getElementById("productModalTitle").textContent =
         product ? "Editar produto" : "Novo produto";
@@ -3712,6 +3797,7 @@ function openProductModal(product=null){
     document.getElementById("productDescription").value = product?.description || "";
     clearMessage(document.getElementById("productMessage"));
     document.getElementById("productModal").classList.remove("hidden");
+    await loadProductCustomFields(currentProductId);
 }
 
 function closeProductModal(){
@@ -3731,7 +3817,7 @@ async function editProduct(id){
         return;
     }
 
-    openProductModal(data);
+    await openProductModal(data);
 }
 
 async function saveProduct(){
@@ -3760,7 +3846,21 @@ async function saveProduct(){
         updated_at: new Date().toISOString()
     };
 
+    // Validar campos personalizados
+    for(const field of productCustomFieldsCache){
+        const el = document.getElementById(`productCustom_${field.id}`);
+        if(field.required){
+            const val = field.field_type === "BOOLEAN" ? (el?.checked ? "true" : "false") : (el?.value || "").trim();
+            if(!val || (field.field_type === "BOOLEAN" && !el.checked)){
+                showMessage(message, `Preencha o campo obrigatório: ${field.field_label}.`, "error");
+                el?.focus();
+                return;
+            }
+        }
+    }
+
     let result;
+    let productCompanyId = null;
 
     if(currentProductId){
         result = await supabaseClient
@@ -3790,6 +3890,56 @@ async function saveProduct(){
         return;
     }
 
+    let productId = currentProductId;
+    if(!productId){
+        const inserted = result.data;
+        if(inserted?.id){
+            productId = inserted.id;
+        } else {
+            const { data: latest, error: latestError } = await supabaseClient
+                .from("products")
+                .select("id")
+                .eq("company_id", payload.company_id)
+                .eq("name", name)
+                .order("created_at", {ascending:false})
+                .limit(1)
+                .maybeSingle();
+            if(latestError || !latest?.id){
+                showMessage(message, "Produto salvo, mas não foi possível identificar o produto para salvar os campos personalizados.", "error");
+                return;
+            }
+            productId = latest.id;
+        }
+    }
+
+    if(!productCompanyId){
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { data: profile } = await supabaseClient.from("profiles").select("company_id").eq("id", user?.id || "").single();
+        productCompanyId = profile?.company_id || null;
+    }
+
+    // Salvar valores dos campos personalizados
+    for(const field of productCustomFieldsCache){
+        const el = document.getElementById(`productCustom_${field.id}`);
+        if(!el) continue;
+        const value = field.field_type === "BOOLEAN" ? (el.checked ? "true" : "false") : (el.value ?? "");
+
+        const { error: valueError } = await supabaseClient
+            .from("custom_field_values")
+            .upsert({
+                company_id: productCompanyId,
+                custom_field_id: field.id,
+                record_id: productId,
+                value_text: String(value),
+                updated_at: new Date().toISOString()
+            }, { onConflict: "custom_field_id,record_id" });
+
+        if(valueError){
+            showMessage(message, `Produto salvo, mas não foi possível salvar o campo ${field.field_label}: ${valueError.message}`, "error");
+            return;
+        }
+    }
+
     closeProductModal();
     await loadProducts();
 }
@@ -3815,7 +3965,7 @@ async function deleteProduct(id){
 
 document.getElementById("newProductBtn").addEventListener("click", async () => {
     await loadProductCategories();
-    openProductModal();
+    await openProductModal();
 });
 document.getElementById("closeProductModal").addEventListener("click", closeProductModal);
 document.getElementById("cancelProductBtn").addEventListener("click", closeProductModal);
