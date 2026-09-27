@@ -434,6 +434,174 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
                 </div>
             </div>
 
+            <!-- MÓDULO VENDAS -->
+            <div class="module-page hidden" id="salesPage">
+                <div class="module-header">
+                    <div>
+                        <button class="back-btn" id="backSalesDashboardBtn">← Dashboard</button>
+                        <h2 style="margin:14px 0 5px">Vendas</h2>
+                        <div class="userinfo">Registre vendas de produtos e serviços da sua empresa.</div>
+                    </div>
+                    <button class="primary top-action" id="newSaleBtn">+ Nova venda</button>
+                </div>
+
+                <div class="toolbar">
+                    <input id="saleDateFilter" type="date">
+                    <input id="saleSearch" type="search" placeholder="Pesquisar por cliente ou número da venda...">
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Venda</th>
+                                <th>Data</th>
+                                <th>Cliente</th>
+                                <th>Pagamento</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesTableBody">
+                            <tr><td colspan="7" class="empty">Carregando vendas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- FORMULÁRIO VENDA -->
+            <div class="modal hidden" id="saleModal">
+                <div class="modal-card" style="max-width:900px">
+                    <div class="modal-header">
+                        <div>
+                            <h3 id="saleModalTitle">Nova venda</h3>
+                            <div class="userinfo">A venda e seus itens serão salvos diretamente no Supabase.</div>
+                        </div>
+                        <button class="close-btn" id="closeSaleModal">×</button>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="saleClient">Cliente</label>
+                            <select id="saleClient">
+                                <option value="">Cliente não informado</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="saleDate">Data *</label>
+                            <input id="saleDate" type="date">
+                        </div>
+
+                        <div class="field">
+                            <label for="salePayment">Forma de pagamento</label>
+                            <select id="salePayment">
+                                <option value="">Não informado</option>
+                                <option value="PIX">PIX</option>
+                                <option value="CASH">Dinheiro</option>
+                                <option value="DEBIT_CARD">Cartão de débito</option>
+                                <option value="CREDIT_CARD">Cartão de crédito</option>
+                                <option value="TRANSFER">Transferência</option>
+                                <option value="OTHER">Outro</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="saleStatus">Status</label>
+                            <select id="saleStatus">
+                                <option value="PENDING">Pendente</option>
+                                <option value="COMPLETED">Concluída</option>
+                                <option value="CANCELLED">Cancelada</option>
+                            </select>
+                        </div>
+
+                        <div class="field full">
+                            <label for="saleNotes">Observações</label>
+                            <textarea id="saleNotes" rows="2" placeholder="Observações da venda"></textarea>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:22px;padding:16px;background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0">
+                        <div style="font-weight:800;margin-bottom:10px">Adicionar item</div>
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="saleItemType">Tipo</label>
+                                <select id="saleItemType">
+                                    <option value="PRODUCT">Produto</option>
+                                    <option value="SERVICE">Serviço</option>
+                                </select>
+                            </div>
+
+                            <div class="field">
+                                <label for="saleItemSelect">Item *</label>
+                                <select id="saleItemSelect">
+                                    <option value="">Selecione</option>
+                                </select>
+                            </div>
+
+                            <div class="field">
+                                <label for="saleItemQuantity">Quantidade</label>
+                                <input id="saleItemQuantity" type="number" min="0.001" step="0.001" value="1">
+                            </div>
+
+                            <div class="field">
+                                <label for="saleItemPrice">Preço unitário</label>
+                                <input id="saleItemPrice" type="number" min="0" step="0.01" value="0">
+                            </div>
+
+                            <div class="field">
+                                <label for="saleItemDiscount">Desconto</label>
+                                <input id="saleItemDiscount" type="number" min="0" step="0.01" value="0">
+                            </div>
+
+                            <div class="field" style="display:flex;align-items:flex-end">
+                                <button class="primary" id="addSaleItemBtn" style="margin-top:0">+ Adicionar item</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:18px">
+                        <div class="table-wrap">
+                            <table style="min-width:700px">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Tipo</th>
+                                        <th>Qtd.</th>
+                                        <th>Unitário</th>
+                                        <th>Desconto</th>
+                                        <th>Total</th>
+                                        <th>Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="saleItemsTableBody">
+                                    <tr><td colspan="7" class="empty">Nenhum item adicionado.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;justify-content:flex-end;margin-top:18px">
+                        <div style="min-width:260px;text-align:right">
+                            <div class="userinfo">Subtotal</div>
+                            <div id="saleSubtotalDisplay" style="font-size:18px;font-weight:800">R$ 0,00</div>
+                            <div class="userinfo" style="margin-top:8px">Desconto total</div>
+                            <div id="saleDiscountDisplay" style="font-size:16px;font-weight:750">R$ 0,00</div>
+                            <div class="userinfo" style="margin-top:8px">TOTAL</div>
+                            <div id="saleTotalDisplay" style="font-size:27px;font-weight:900;color:#1d4ed8">R$ 0,00</div>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button class="secondary" id="cancelSaleBtn">Cancelar</button>
+                        <button class="primary" id="saveSaleBtn">Salvar venda</button>
+                    </div>
+
+                    <div class="message" id="saleMessage"></div>
+                </div>
+            </div>
+
             <!-- MÓDULO SERVIÇOS -->
             <div class="module-page hidden" id="servicesPage">
                 <div class="module-header">
@@ -999,6 +1167,7 @@ async function loadDashboard(){
         {code:"PRODUCTS", name:"Produtos", icon:"📦", description:"Produtos e estoque."},
         {code:"SERVICES", name:"Serviços", icon:"🛠️", description:"Catálogo de serviços."},
         {code:"APPOINTMENTS", name:"Agenda", icon:"📅", description:"Agendamentos."},
+        {code:"SALES", name:"Vendas", icon:"🛒", description:"Registro de vendas."},
         {code:"FINANCE", name:"Financeiro", icon:"💰", description:"Entradas e saídas."}
     ];
 
@@ -1029,6 +1198,10 @@ async function loadDashboard(){
         }
         if(module.code === "APPOINTMENTS"){
             card.addEventListener("click", openAppointments);
+        }
+        if(module.code === "SALES"){
+            card.style.cursor = "pointer";
+            card.addEventListener("click", openSales);
         }
         moduleCards.appendChild(card);
     });
@@ -1431,6 +1604,501 @@ document.getElementById("appointmentStart").addEventListener("change", () => {
         `${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
 });
 
+/* ---------- Módulo Vendas ---------- */
+let currentSaleId = null;
+let salesCache = [];
+let saleItemsDraft = [];
+let saleClientsCache = [];
+let saleProductsCache = [];
+let saleServicesCache = [];
+
+function saleStatusLabel(status){
+    const labels = {
+        PENDING: "Pendente",
+        COMPLETED: "Concluída",
+        CANCELLED: "Cancelada"
+    };
+    return labels[status] || status || "—";
+}
+
+function paymentMethodLabel(method){
+    const labels = {
+        PIX: "PIX",
+        CASH: "Dinheiro",
+        DEBIT_CARD: "Débito",
+        CREDIT_CARD: "Crédito",
+        TRANSFER: "Transferência",
+        OTHER: "Outro"
+    };
+    return labels[method] || method || "—";
+}
+
+function saleItemTypeLabel(type){
+    return type === "SERVICE" ? "Serviço" : "Produto";
+}
+
+function calculateSaleItemTotal(item){
+    const quantity = Number(item.quantity || 0);
+    const unitPrice = Number(item.unit_price || 0);
+    const discount = Number(item.discount || 0);
+    return Math.max(0, (quantity * unitPrice) - discount);
+}
+
+function calculateSaleTotals(){
+    const subtotal = saleItemsDraft.reduce((sum, item) =>
+        sum + (Number(item.quantity || 0) * Number(item.unit_price || 0)), 0);
+    const discount = saleItemsDraft.reduce((sum, item) =>
+        sum + Number(item.discount || 0), 0);
+    const total = Math.max(0, subtotal - discount);
+    return {subtotal, discount, total};
+}
+
+async function openSales(){
+    hideDashboardModules();
+    document.getElementById("clientsPage").classList.add("hidden");
+    document.getElementById("productsPage").classList.add("hidden");
+    document.getElementById("servicesPage").classList.add("hidden");
+    document.getElementById("appointmentsPage").classList.add("hidden");
+    document.getElementById("salesPage").classList.remove("hidden");
+
+    const dateFilter = document.getElementById("saleDateFilter");
+    if(!dateFilter.value){
+        const today = new Date();
+        dateFilter.value = today.toISOString().slice(0,10);
+    }
+
+    await loadSaleDependencies();
+    await loadSales();
+}
+
+function closeSales(){
+    document.getElementById("salesPage").classList.add("hidden");
+    showDashboardModules();
+}
+
+async function loadSaleDependencies(){
+    const [clientsResult, productsResult, servicesResult] = await Promise.all([
+        supabaseClient
+            .from("clients")
+            .select("id,name")
+            .eq("active", true)
+            .order("name", {ascending:true}),
+        supabaseClient
+            .from("products")
+            .select("id,name,code,sale_price,stock,unit")
+            .eq("active", true)
+            .order("name", {ascending:true}),
+        supabaseClient
+            .from("services")
+            .select("id,name,price,duration_minutes")
+            .eq("active", true)
+            .order("name", {ascending:true})
+    ]);
+
+    saleClientsCache = clientsResult.data || [];
+    saleProductsCache = productsResult.data || [];
+    saleServicesCache = servicesResult.data || [];
+
+    const clientSelect = document.getElementById("saleClient");
+    clientSelect.innerHTML = '<option value="">Cliente não informado</option>';
+    saleClientsCache.forEach(client => {
+        const option = document.createElement("option");
+        option.value = client.id;
+        option.textContent = client.name;
+        clientSelect.appendChild(option);
+    });
+
+    updateSaleItemOptions();
+}
+
+function updateSaleItemOptions(){
+    const type = document.getElementById("saleItemType").value;
+    const select = document.getElementById("saleItemSelect");
+    select.innerHTML = '<option value="">Selecione</option>';
+
+    if(type === "PRODUCT"){
+        saleProductsCache.forEach(product => {
+            const option = document.createElement("option");
+            option.value = product.id;
+            option.textContent = `${product.name} — ${formatMoney(product.sale_price)}${product.stock != null ? ` • Estoque: ${product.stock}` : ""}`;
+            option.dataset.price = product.sale_price || 0;
+            option.dataset.name = product.name || "";
+            option.dataset.code = product.code || "";
+            option.dataset.stock = product.stock ?? "";
+            select.appendChild(option);
+        });
+    }else{
+        saleServicesCache.forEach(service => {
+            const option = document.createElement("option");
+            option.value = service.id;
+            option.textContent = `${service.name} — ${formatMoney(service.price)}`;
+            option.dataset.price = service.price || 0;
+            option.dataset.name = service.name || "";
+            select.appendChild(option);
+        });
+    }
+
+    document.getElementById("saleItemPrice").value = 0;
+}
+
+async function loadSales(){
+    const tbody = document.getElementById("salesTableBody");
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Carregando vendas...</td></tr>';
+
+    let query = supabaseClient
+        .from("sales")
+        .select("id,sale_number,sale_date,client_id,subtotal,discount,total,payment_method,status,notes,created_at")
+        .order("sale_date", {ascending:false})
+        .order("sale_number", {ascending:false});
+
+    const selectedDate = document.getElementById("saleDateFilter").value;
+    if(selectedDate){
+        query = query.eq("sale_date", selectedDate);
+    }
+
+    const { data, error } = await query;
+
+    if(error){
+        tbody.innerHTML = `<tr><td colspan="7" class="empty">Erro ao carregar vendas: ${escapeHtml(error.message)}</td></tr>`;
+        return;
+    }
+
+    salesCache = data || [];
+    renderSales(salesCache);
+}
+
+function renderSales(list){
+    const tbody = document.getElementById("salesTableBody");
+    const term = document.getElementById("saleSearch").value.toLowerCase().trim();
+
+    const filtered = list.filter(sale => {
+        const client = saleClientsCache.find(c => c.id === sale.client_id);
+        const text = `${sale.sale_number || ""} ${client?.name || ""}`.toLowerCase();
+        return !term || text.includes(term);
+    });
+
+    if(!filtered.length){
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">Nenhuma venda encontrada.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = "";
+    filtered.forEach(sale => {
+        const client = saleClientsCache.find(c => c.id === sale.client_id);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><strong>#${escapeHtml(String(sale.sale_number ?? "—"))}</strong></td>
+            <td>${formatDateBR(sale.sale_date)}</td>
+            <td>${escapeHtml(client?.name || "Cliente não informado")}</td>
+            <td>${escapeHtml(paymentMethodLabel(sale.payment_method))}</td>
+            <td><strong>${formatMoney(sale.total)}</strong></td>
+            <td><span class="badge">${escapeHtml(saleStatusLabel(sale.status))}</span></td>
+            <td>
+                <button class="action-btn edit-sale" data-id="${sale.id}">Editar</button>
+                <button class="action-btn delete delete-sale" data-id="${sale.id}">Excluir</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll(".edit-sale").forEach(btn => {
+        btn.addEventListener("click", () => editSale(btn.dataset.id));
+    });
+    tbody.querySelectorAll(".delete-sale").forEach(btn => {
+        btn.addEventListener("click", () => deleteSale(btn.dataset.id));
+    });
+}
+
+function resetSaleForm(){
+    currentSaleId = null;
+    saleItemsDraft = [];
+    document.getElementById("saleModalTitle").textContent = "Nova venda";
+    document.getElementById("saleClient").value = "";
+    document.getElementById("saleDate").value = document.getElementById("saleDateFilter").value || new Date().toISOString().slice(0,10);
+    document.getElementById("salePayment").value = "";
+    document.getElementById("saleStatus").value = "COMPLETED";
+    document.getElementById("saleNotes").value = "";
+    document.getElementById("saleItemType").value = "PRODUCT";
+    document.getElementById("saleItemQuantity").value = "1";
+    document.getElementById("saleItemPrice").value = "0";
+    document.getElementById("saleItemDiscount").value = "0";
+    clearMessage(document.getElementById("saleMessage"));
+    updateSaleItemOptions();
+    renderSaleItemsDraft();
+}
+
+async function openSaleModal(sale=null){
+    resetSaleForm();
+    currentSaleId = sale?.id || null;
+
+    if(sale){
+        document.getElementById("saleModalTitle").textContent = `Editar venda #${sale.sale_number}`;
+        document.getElementById("saleClient").value = sale.client_id || "";
+        document.getElementById("saleDate").value = sale.sale_date || "";
+        document.getElementById("salePayment").value = sale.payment_method || "";
+        document.getElementById("saleStatus").value = sale.status || "PENDING";
+        document.getElementById("saleNotes").value = sale.notes || "";
+
+        const { data, error } = await supabaseClient
+            .from("sale_items")
+            .select("id,product_id,service_id,description,quantity,unit_price,discount,total")
+            .eq("sale_id", sale.id)
+            .order("created_at", {ascending:true});
+
+        if(error){
+            showMessage(document.getElementById("saleMessage"), error.message, "error");
+        }else{
+            saleItemsDraft = (data || []).map(item => ({
+                original_id: item.id,
+                product_id: item.product_id,
+                service_id: item.service_id,
+                description: item.description || "Item",
+                quantity: Number(item.quantity || 0),
+                unit_price: Number(item.unit_price || 0),
+                discount: Number(item.discount || 0)
+            }));
+            renderSaleItemsDraft();
+        }
+    }
+
+    document.getElementById("saleModal").classList.remove("hidden");
+}
+
+function closeSaleModal(){
+    document.getElementById("saleModal").classList.add("hidden");
+}
+
+function addSaleItem(){
+    const type = document.getElementById("saleItemType").value;
+    const select = document.getElementById("saleItemSelect");
+    const option = select.selectedOptions[0];
+    const quantity = Number(document.getElementById("saleItemQuantity").value || 0);
+    const unitPrice = Number(document.getElementById("saleItemPrice").value || 0);
+    const discount = Number(document.getElementById("saleItemDiscount").value || 0);
+
+    if(!option || !option.value){
+        return showMessage(document.getElementById("saleMessage"), "Selecione um produto ou serviço.", "error");
+    }
+    if(quantity <= 0){
+        return showMessage(document.getElementById("saleMessage"), "A quantidade deve ser maior que zero.", "error");
+    }
+    if(unitPrice < 0 || discount < 0){
+        return showMessage(document.getElementById("saleMessage"), "Preço e desconto não podem ser negativos.", "error");
+    }
+    if(discount > quantity * unitPrice){
+        return showMessage(document.getElementById("saleMessage"), "O desconto não pode ser maior que o valor do item.", "error");
+    }
+
+    const item = {
+        product_id: type === "PRODUCT" ? option.value : null,
+        service_id: type === "SERVICE" ? option.value : null,
+        description: option.dataset.name || option.textContent.split(" — ")[0],
+        quantity,
+        unit_price: unitPrice,
+        discount
+    };
+
+    saleItemsDraft.push(item);
+    clearMessage(document.getElementById("saleMessage"));
+    renderSaleItemsDraft();
+
+    document.getElementById("saleItemQuantity").value = "1";
+    document.getElementById("saleItemDiscount").value = "0";
+}
+
+function renderSaleItemsDraft(){
+    const tbody = document.getElementById("saleItemsTableBody");
+
+    if(!saleItemsDraft.length){
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">Nenhum item adicionado.</td></tr>';
+    }else{
+        tbody.innerHTML = "";
+        saleItemsDraft.forEach((item, index) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${escapeHtml(item.description || "Item")}</td>
+                <td>${saleItemTypeLabel(item.service_id ? "SERVICE" : "PRODUCT")}</td>
+                <td>${Number(item.quantity || 0)}</td>
+                <td>${formatMoney(item.unit_price)}</td>
+                <td>${formatMoney(item.discount)}</td>
+                <td><strong>${formatMoney(calculateSaleItemTotal(item))}</strong></td>
+                <td><button class="action-btn delete remove-sale-item" data-index="${index}">Remover</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        tbody.querySelectorAll(".remove-sale-item").forEach(btn => {
+            btn.addEventListener("click", () => {
+                saleItemsDraft.splice(Number(btn.dataset.index), 1);
+                renderSaleItemsDraft();
+            });
+        });
+    }
+
+    const totals = calculateSaleTotals();
+    document.getElementById("saleSubtotalDisplay").textContent = formatMoney(totals.subtotal);
+    document.getElementById("saleDiscountDisplay").textContent = formatMoney(totals.discount);
+    document.getElementById("saleTotalDisplay").textContent = formatMoney(totals.total);
+}
+
+async function saveSale(){
+    const message = document.getElementById("saleMessage");
+    clearMessage(message);
+
+    const date = document.getElementById("saleDate").value;
+    const clientId = document.getElementById("saleClient").value || null;
+    const paymentMethod = document.getElementById("salePayment").value || null;
+    const status = document.getElementById("saleStatus").value;
+    const notes = document.getElementById("saleNotes").value.trim();
+
+    if(!date){
+        return showMessage(message, "Informe a data da venda.", "error");
+    }
+    if(!saleItemsDraft.length){
+        return showMessage(message, "Adicione pelo menos um item à venda.", "error");
+    }
+
+    const totals = calculateSaleTotals();
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if(!user){
+        return showMessage(message, "Sua sessão expirou. Faça login novamente.", "error");
+    }
+
+    const { data: profile, error: profileError } = await supabaseClient
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single();
+
+    if(profileError || !profile?.company_id){
+        return showMessage(message, "Não foi possível identificar a empresa do usuário.", "error");
+    }
+
+    const payload = {
+        company_id: profile.company_id,
+        client_id: clientId,
+        sale_date: date,
+        subtotal: totals.subtotal,
+        discount: totals.discount,
+        total: totals.total,
+        payment_method: paymentMethod,
+        status,
+        notes: notes || null,
+        created_by: user.id
+    };
+
+    let saleId = currentSaleId;
+    let saleResult;
+
+    if(currentSaleId){
+        saleResult = await supabaseClient
+            .from("sales")
+            .update(payload)
+            .eq("id", currentSaleId)
+            .select("id")
+            .single();
+    }else{
+        saleResult = await supabaseClient
+            .from("sales")
+            .insert(payload)
+            .select("id")
+            .single();
+        saleId = saleResult.data?.id;
+    }
+
+    if(saleResult.error || !saleId){
+        return showMessage(message, saleResult.error?.message || "Não foi possível salvar a venda.", "error");
+    }
+
+    if(currentSaleId){
+        const { error: deleteItemsError } = await supabaseClient
+            .from("sale_items")
+            .delete()
+            .eq("sale_id", currentSaleId);
+
+        if(deleteItemsError){
+            return showMessage(message, deleteItemsError.message, "error");
+        }
+    }
+
+    const itemsPayload = saleItemsDraft.map(item => ({
+        sale_id: saleId,
+        product_id: item.product_id || null,
+        service_id: item.service_id || null,
+        description: item.description,
+        quantity: Number(item.quantity),
+        unit_price: Number(item.unit_price),
+        discount: Number(item.discount || 0),
+        total: calculateSaleItemTotal(item)
+    }));
+
+    const { error: itemsError } = await supabaseClient
+        .from("sale_items")
+        .insert(itemsPayload);
+
+    if(itemsError){
+        if(!currentSaleId){
+            await supabaseClient.from("sales").delete().eq("id", saleId);
+        }
+        return showMessage(message, itemsError.message, "error");
+    }
+
+    closeSaleModal();
+    await loadSales();
+}
+
+async function editSale(id){
+    const sale = salesCache.find(s => s.id === id);
+    if(!sale) return;
+    await openSaleModal(sale);
+}
+
+async function deleteSale(id){
+    const sale = salesCache.find(s => s.id === id);
+    if(!sale) return;
+
+    if(!confirm(`Excluir a venda #${sale.sale_number}?`)) return;
+
+    const { error: itemsError } = await supabaseClient
+        .from("sale_items")
+        .delete()
+        .eq("sale_id", id);
+
+    if(itemsError){
+        alert("Não foi possível excluir os itens da venda: " + itemsError.message);
+        return;
+    }
+
+    const { error } = await supabaseClient
+        .from("sales")
+        .delete()
+        .eq("id", id);
+
+    if(error){
+        alert("Não foi possível excluir a venda: " + error.message);
+        return;
+    }
+
+    await loadSales();
+}
+
+document.getElementById("newSaleBtn").addEventListener("click", async () => {
+    await loadSaleDependencies();
+    openSaleModal();
+});
+document.getElementById("closeSaleModal").addEventListener("click", closeSaleModal);
+document.getElementById("cancelSaleBtn").addEventListener("click", closeSaleModal);
+document.getElementById("saveSaleBtn").addEventListener("click", saveSale);
+document.getElementById("backSalesDashboardBtn").addEventListener("click", closeSales);
+document.getElementById("addSaleItemBtn").addEventListener("click", addSaleItem);
+document.getElementById("saleItemType").addEventListener("change", updateSaleItemOptions);
+document.getElementById("saleItemSelect").addEventListener("change", () => {
+    const option = document.getElementById("saleItemSelect").selectedOptions[0];
+    document.getElementById("saleItemPrice").value = option?.dataset.price || 0;
+});
+document.getElementById("saleDateFilter").addEventListener("change", loadSales);
+document.getElementById("saleSearch").addEventListener("input", () => renderSales(salesCache));
+
 /* ---------- Módulo Serviços ---------- */
 let currentServiceId = null;
 let servicesCache = [];
@@ -1679,6 +2347,9 @@ function showDashboardModules(){
     document.getElementById("moduleCards").parentElement.querySelector(".status").classList.remove("hidden");
     document.getElementById("clientsPage").classList.add("hidden");
     document.getElementById("productsPage").classList.add("hidden");
+    document.getElementById("servicesPage").classList.add("hidden");
+    document.getElementById("appointmentsPage").classList.add("hidden");
+    document.getElementById("salesPage").classList.add("hidden");
 }
 
 async function openProducts(){
