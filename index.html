@@ -2355,10 +2355,18 @@ async function saveInventoryMovement(){
 
     const {data:userData}=await supabaseClient.auth.getUser();
     const user=userData?.user;
+    const {data:profile,error:profileError}=await supabaseClient
+        .from("profiles")
+        .select("company_id")
+        .eq("id",user?.id)
+        .single();
+    if(profileError || !profile?.company_id) return showMessage(message,"Não foi possível identificar a empresa do usuário.","error");
+    const companyId=profile.company_id;
     const {error:updateError}=await supabaseClient.from("products").update({stock:newStock,updated_at:new Date().toISOString()}).eq("id",productId);
     if(updateError) return showMessage(message,updateError.message,"error");
 
     const {error:movementError}=await supabaseClient.from("inventory_movements").insert({
+        company_id:companyId,
         product_id:productId,
         type,
         quantity:movementQty,
