@@ -2883,6 +2883,9 @@ function serviceOrderTotals(){
     const discount=serviceOrderItemsDraft.reduce((sum,x)=>sum+(Number(x.discount)||0),0);
     return {subtotal,discount,total:Math.max(0,subtotal-discount)};
 }
+function brl(value){
+    return "R$ " + Number(value || 0).toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
 function renderServiceOrderTotals(){
     const t=serviceOrderTotals();
     document.getElementById("serviceOrderSubtotalDisplay").textContent=brl(t.subtotal);
