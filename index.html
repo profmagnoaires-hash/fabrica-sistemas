@@ -470,6 +470,77 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
                 </div>
             </div>
 
+
+
+            <!-- MÓDULO ORÇAMENTOS -->
+            <div class="module-page hidden" id="quotesPage">
+                <div class="module-header">
+                    <div>
+                        <button class="back-btn" id="backQuotesDashboardBtn">← Dashboard</button>
+                        <h2 style="margin:14px 0 5px">Orçamentos</h2>
+                        <div class="userinfo">Crie, acompanhe e gerencie propostas para seus clientes.</div>
+                    </div>
+                    <button class="primary top-action" id="newQuoteBtn">+ Novo orçamento</button>
+                </div>
+                <div class="toolbar">
+                    <input id="quoteSearch" type="search" placeholder="Pesquisar por cliente ou número...">
+                    <select id="quoteStatusFilter">
+                        <option value="ALL">Todos os status</option>
+                        <option value="PENDING">Pendentes</option>
+                        <option value="APPROVED">Aprovados</option>
+                        <option value="REJECTED">Rejeitados</option>
+                        <option value="EXPIRED">Expirados</option>
+                        <option value="CANCELLED">Cancelados</option>
+                    </select>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Orçamento</th><th>Data</th><th>Cliente</th><th>Validade</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead>
+                        <tbody id="quotesTableBody"><tr><td colspan="7" class="empty">Carregando orçamentos...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MODAL ORÇAMENTO -->
+            <div class="modal hidden" id="quoteModal">
+                <div class="modal-card" style="max-width:1000px">
+                    <div class="modal-header">
+                        <div><h3 id="quoteModalTitle">Novo orçamento</h3><div class="userinfo">Adicione produtos e serviços e salve a proposta no Supabase.</div></div>
+                        <button class="close-btn" id="closeQuoteModal">×</button>
+                    </div>
+                    <div class="form-grid">
+                        <div class="field full"><label for="quoteClient">Cliente *</label><select id="quoteClient"><option value="">Selecione o cliente</option></select></div>
+                        <div class="field"><label for="quoteDate">Data *</label><input id="quoteDate" type="date"></div>
+                        <div class="field"><label for="quoteValidUntil">Validade</label><input id="quoteValidUntil" type="date"></div>
+                        <div class="field"><label for="quoteStatus">Status *</label><select id="quoteStatus"><option value="PENDING">Pendente</option><option value="APPROVED">Aprovado</option><option value="REJECTED">Rejeitado</option><option value="EXPIRED">Expirado</option><option value="CANCELLED">Cancelado</option></select></div>
+                    </div>
+                    <div style="margin-top:18px">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px"><strong>Itens do orçamento</strong><button class="secondary" id="addQuoteItemBtn">+ Adicionar item</button></div>
+                        <div class="table-wrap"><table><thead><tr><th>Tipo</th><th>Item</th><th>Qtd.</th><th>Preço</th><th>Desconto</th><th>Total</th><th>Ação</th></tr></thead><tbody id="quoteItemsTableBody"><tr><td colspan="7" class="empty">Nenhum item adicionado.</td></tr></tbody></table></div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;margin-top:18px"><div style="min-width:260px;text-align:right"><div class="userinfo">Subtotal</div><div id="quoteSubtotalDisplay" style="font-size:18px;font-weight:800">R$ 0,00</div><div class="userinfo" style="margin-top:8px">Desconto total</div><div id="quoteDiscountDisplay" style="font-size:16px;font-weight:750">R$ 0,00</div><div class="userinfo" style="margin-top:8px">TOTAL</div><div id="quoteTotalDisplay" style="font-size:27px;font-weight:900;color:#1d4ed8">R$ 0,00</div></div></div>
+                    <div class="field full" style="margin-top:18px"><label for="quoteNotes">Observações</label><textarea id="quoteNotes" rows="3" placeholder="Condições, prazo, informações adicionais..."></textarea></div>
+                    <div class="modal-actions"><button class="secondary" id="cancelQuoteBtn">Cancelar</button><button class="primary" id="saveQuoteBtn">Salvar orçamento</button></div>
+                    <div class="message" id="quoteMessage"></div>
+                </div>
+            </div>
+
+            <!-- MODAL ITEM DO ORÇAMENTO -->
+            <div class="modal hidden" id="quoteItemModal">
+                <div class="modal-card" style="max-width:650px">
+                    <div class="modal-header"><div><h3>Adicionar item</h3><div class="userinfo">Escolha um produto ou serviço.</div></div><button class="close-btn" id="closeQuoteItemModal">×</button></div>
+                    <div class="form-grid">
+                        <div class="field"><label for="quoteItemType">Tipo *</label><select id="quoteItemType"><option value="PRODUCT">Produto</option><option value="SERVICE">Serviço</option></select></div>
+                        <div class="field"><label for="quoteItemSelect">Item *</label><select id="quoteItemSelect"><option value="">Selecione</option></select></div>
+                        <div class="field"><label for="quoteItemQuantity">Quantidade *</label><input id="quoteItemQuantity" type="number" min="0.001" step="0.001" value="1"></div>
+                        <div class="field"><label for="quoteItemPrice">Preço unitário *</label><input id="quoteItemPrice" type="number" min="0" step="0.01"></div>
+                        <div class="field full"><label for="quoteItemDiscount">Desconto</label><input id="quoteItemDiscount" type="number" min="0" step="0.01" value="0"></div>
+                    </div>
+                    <div class="modal-actions"><button class="secondary" id="cancelQuoteItemBtn">Cancelar</button><button class="primary" id="saveQuoteItemBtn">Adicionar</button></div>
+                    <div class="message" id="quoteItemMessage"></div>
+                </div>
+            </div>
+
             <!-- MÓDULO FINANCEIRO -->
             <div class="module-page hidden" id="financePage">
                 <div class="module-header">
@@ -1387,7 +1458,8 @@ async function loadDashboard(){
         {code:"APPOINTMENTS", name:"Agenda", icon:"📅", description:"Agendamentos."},
         {code:"SALES", name:"Vendas", icon:"🛒", description:"Registro de vendas."},
         {code:"INVENTORY", name:"Estoque", icon:"📦", description:"Controle de estoque e movimentações."},
-        {code:"FINANCE", name:"Financeiro", icon:"💰", description:"Entradas e saídas."}
+        {code:"FINANCE", name:"Financeiro", icon:"💰", description:"Entradas e saídas."},
+        {code:"QUOTES", name:"Orçamentos", icon:"🧾", description:"Propostas e orçamentos."}
     ];
 
     const activeModules = (modules || [])
@@ -1429,6 +1501,10 @@ async function loadDashboard(){
         if(module.code === "FINANCE"){
             card.style.cursor = "pointer";
             card.addEventListener("click", openFinance);
+        }
+        if(module.code === "QUOTES"){
+            card.style.cursor = "pointer";
+            card.addEventListener("click", openQuotes);
         }
         moduleCards.appendChild(card);
     });
@@ -2497,6 +2573,218 @@ async function saveInventoryMovement(){
     await loadInventory();
 }
 
+
+/* ---------- Módulo Orçamentos ---------- */
+let currentQuoteId = null;
+let quotesCache = [];
+let quoteItemsDraft = [];
+let quoteClientsCache = [];
+let quoteProductsCache = [];
+let quoteServicesCache = [];
+
+function quoteStatusLabel(status){
+    const m={PENDING:"Pendente",APPROVED:"Aprovado",REJECTED:"Rejeitado",EXPIRED:"Expirado",CANCELLED:"Cancelado"};
+    return m[status]||status||"—";
+}
+function quoteItemTotal(item){
+    return Math.max(0,(Number(item.quantity||0)*Number(item.unit_price||0))-Number(item.discount||0));
+}
+function quoteTotals(){
+    const subtotal=quoteItemsDraft.reduce((s,i)=>s+Number(i.quantity||0)*Number(i.unit_price||0),0);
+    const discount=quoteItemsDraft.reduce((s,i)=>s+Number(i.discount||0),0);
+    return {subtotal,discount,total:Math.max(0,subtotal-discount)};
+}
+function renderQuoteTotals(){
+    const t=quoteTotals();
+    document.getElementById("quoteSubtotalDisplay").textContent=formatMoney(t.subtotal);
+    document.getElementById("quoteDiscountDisplay").textContent=formatMoney(t.discount);
+    document.getElementById("quoteTotalDisplay").textContent=formatMoney(t.total);
+}
+function renderQuoteItems(){
+    const tbody=document.getElementById("quoteItemsTableBody");
+    if(!quoteItemsDraft.length){tbody.innerHTML='<tr><td colspan="7" class="empty">Nenhum item adicionado.</td></tr>';renderQuoteTotals();return;}
+    tbody.innerHTML=quoteItemsDraft.map((x,i)=>`<tr>
+        <td>${x.item_type==="SERVICE"?"Serviço":"Produto"}</td>
+        <td>${escapeHtml(x.description||"")}</td>
+        <td>${Number(x.quantity||0)}</td>
+        <td>${formatMoney(x.unit_price)}</td>
+        <td>${formatMoney(x.discount||0)}</td>
+        <td>${formatMoney(quoteItemTotal(x))}</td>
+        <td><button class="action-btn delete delete-quote-item" data-index="${i}">Remover</button></td>
+    </tr>`).join("");
+    tbody.querySelectorAll(".delete-quote-item").forEach(b=>b.addEventListener("click",()=>{quoteItemsDraft.splice(Number(b.dataset.index),1);renderQuoteItems();}));
+    renderQuoteTotals();
+}
+async function loadQuoteDependencies(){
+    const [c,p,s]=await Promise.all([
+        supabaseClient.from("clients").select("id,name").eq("active",true).order("name",{ascending:true}),
+        supabaseClient.from("products").select("id,name,code,sale_price").eq("active",true).order("name",{ascending:true}),
+        supabaseClient.from("services").select("id,name,price").eq("active",true).order("name",{ascending:true})
+    ]);
+    if(c.error||p.error||s.error){alert((c.error||p.error||s.error).message);return false;}
+    quoteClientsCache=c.data||[]; quoteProductsCache=p.data||[]; quoteServicesCache=s.data||[];
+    const select=document.getElementById("quoteClient");
+    select.innerHTML='<option value="">Selecione o cliente</option>'+quoteClientsCache.map(x=>`<option value="${x.id}">${escapeHtml(x.name)}</option>`).join("");
+    return true;
+}
+function renderQuoteItemOptions(){
+    const type=document.getElementById("quoteItemType").value;
+    const select=document.getElementById("quoteItemSelect");
+    const list=type==="SERVICE"?quoteServicesCache:quoteProductsCache;
+    select.innerHTML='<option value="">Selecione</option>'+list.map(x=>`<option value="${x.id}">${escapeHtml(x.name)}${x.code?` — ${escapeHtml(x.code)}`:""}</option>`).join("");
+    document.getElementById("quoteItemPrice").value="";
+}
+function updateQuoteItemPrice(){
+    const id=document.getElementById("quoteItemSelect").value;
+    const type=document.getElementById("quoteItemType").value;
+    const list=type==="SERVICE"?quoteServicesCache:quoteProductsCache;
+    const item=list.find(x=>x.id===id);
+    document.getElementById("quoteItemPrice").value=item?(type==="SERVICE"?item.price:item.sale_price):"";
+}
+function openQuoteItemModal(){
+    document.getElementById("quoteItemType").value="PRODUCT";
+    document.getElementById("quoteItemQuantity").value="1";
+    document.getElementById("quoteItemDiscount").value="0";
+    clearMessage(document.getElementById("quoteItemMessage"));
+    renderQuoteItemOptions();
+    document.getElementById("quoteItemModal").classList.remove("hidden");
+}
+function closeQuoteItemModal(){document.getElementById("quoteItemModal").classList.add("hidden");}
+function saveQuoteItem(){
+    const msg=document.getElementById("quoteItemMessage");clearMessage(msg);
+    const type=document.getElementById("quoteItemType").value;
+    const id=document.getElementById("quoteItemSelect").value;
+    const quantity=Number(document.getElementById("quoteItemQuantity").value||0);
+    const unitPrice=Number(document.getElementById("quoteItemPrice").value||0);
+    const discount=Number(document.getElementById("quoteItemDiscount").value||0);
+    const list=type==="SERVICE"?quoteServicesCache:quoteProductsCache;
+    const item=list.find(x=>x.id===id);
+    if(!item)return showMessage(msg,"Selecione um item.","error");
+    if(!Number.isFinite(quantity)||quantity<=0)return showMessage(msg,"Informe uma quantidade válida.","error");
+    if(!Number.isFinite(unitPrice)||unitPrice<0)return showMessage(msg,"Informe um preço válido.","error");
+    if(!Number.isFinite(discount)||discount<0||discount>quantity*unitPrice)return showMessage(msg,"Informe um desconto válido.","error");
+    quoteItemsDraft.push({item_type:type,product_id:type==="PRODUCT"?item.id:null,service_id:type==="SERVICE"?item.id:null,description:item.name,quantity,unit_price:unitPrice,discount});
+    renderQuoteItems();closeQuoteItemModal();
+}
+async function openQuotes(){
+    hideDashboardModules();
+    document.getElementById("clientsPage").classList.add("hidden");
+    document.getElementById("productsPage").classList.add("hidden");
+    document.getElementById("servicesPage").classList.add("hidden");
+    document.getElementById("appointmentsPage").classList.add("hidden");
+    document.getElementById("salesPage").classList.add("hidden");
+    document.getElementById("inventoryPage").classList.add("hidden");
+    document.getElementById("financePage").classList.add("hidden");
+    document.getElementById("quotesPage").classList.remove("hidden");
+    await loadQuoteDependencies();
+    await loadQuotes();
+}
+function closeQuotes(){document.getElementById("quotesPage").classList.add("hidden");showDashboardModules();}
+async function loadQuotes(){
+    const {data,error}=await supabaseClient.from("quotes").select("*, clients(name)").order("quote_date",{ascending:false}).order("created_at",{ascending:false});
+    if(error){document.getElementById("quotesTableBody").innerHTML=`<tr><td colspan="7" class="empty">${escapeHtml(error.message)}</td></tr>`;return;}
+    quotesCache=data||[];renderQuotes(quotesCache);
+}
+function renderQuotes(items){
+    const term=document.getElementById("quoteSearch").value.toLowerCase().trim();
+    const status=document.getElementById("quoteStatusFilter").value;
+    const filtered=items.filter(x=>{
+        const text=`${x.quote_number||""} ${x.clients?.name||""}`.toLowerCase();
+        return (!term||text.includes(term))&&(status==="ALL"||x.status===status);
+    });
+    const tbody=document.getElementById("quotesTableBody");
+    if(!filtered.length){tbody.innerHTML='<tr><td colspan="7" class="empty">Nenhum orçamento encontrado.</td></tr>';return;}
+    tbody.innerHTML=filtered.map(x=>`<tr>
+        <td>#${x.quote_number||"—"}</td><td>${formatDateBR(x.quote_date)}</td><td>${escapeHtml(x.clients?.name||"Sem cliente")}</td><td>${formatDateBR(x.valid_until)}</td><td>${formatMoney(x.total||0)}</td><td>${escapeHtml(quoteStatusLabel(x.status))}</td>
+        <td><button class="action-btn edit edit-quote" data-id="${x.id}">Editar</button> <button class="action-btn delete delete-quote" data-id="${x.id}">Excluir</button></td>
+    </tr>`).join("");
+    tbody.querySelectorAll(".edit-quote").forEach(b=>b.addEventListener("click",()=>editQuote(b.dataset.id)));
+    tbody.querySelectorAll(".delete-quote").forEach(b=>b.addEventListener("click",()=>deleteQuote(b.dataset.id)));
+}
+async function editQuote(id){
+    const {data,error}=await supabaseClient.from("quotes").select("*").eq("id",id).single();
+    if(error){alert("Não foi possível carregar: "+error.message);return;}
+    const {data:items,error:itemError}=await supabaseClient.from("quote_items").select("*").eq("quote_id",id).order("created_at",{ascending:true});
+    if(itemError){alert("Não foi possível carregar os itens: "+itemError.message);return;}
+    currentQuoteId=id;
+    quoteItemsDraft=(items||[]).map(x=>({id:x.id,item_type:x.product_id?"PRODUCT":"SERVICE",product_id:x.product_id,service_id:x.service_id,description:x.description,quantity:x.quantity,unit_price:x.unit_price,discount:x.discount||0}));
+    document.getElementById("quoteModalTitle").textContent="Editar orçamento";
+    document.getElementById("quoteClient").value=data.client_id||"";
+    document.getElementById("quoteDate").value=data.quote_date||new Date().toISOString().slice(0,10);
+    document.getElementById("quoteValidUntil").value=data.valid_until||"";
+    document.getElementById("quoteStatus").value=data.status||"PENDING";
+    document.getElementById("quoteNotes").value=data.notes||"";
+    renderQuoteItems();clearMessage(document.getElementById("quoteMessage"));document.getElementById("quoteModal").classList.remove("hidden");
+}
+async function openQuoteModal(item=null){
+    currentQuoteId=item?.id||null;
+    await loadQuoteDependencies();
+    document.getElementById("quoteModalTitle").textContent=item?"Editar orçamento":"Novo orçamento";
+    document.getElementById("quoteClient").value=item?.client_id||"";
+    document.getElementById("quoteDate").value=item?.quote_date||new Date().toISOString().slice(0,10);
+    document.getElementById("quoteValidUntil").value=item?.valid_until||"";
+    document.getElementById("quoteStatus").value=item?.status||"PENDING";
+    document.getElementById("quoteNotes").value=item?.notes||"";
+    quoteItemsDraft=[];renderQuoteItems();clearMessage(document.getElementById("quoteMessage"));document.getElementById("quoteModal").classList.remove("hidden");
+}
+function closeQuoteModal(){document.getElementById("quoteModal").classList.add("hidden");currentQuoteId=null;quoteItemsDraft=[];}
+async function saveQuote(){
+    const msg=document.getElementById("quoteMessage");clearMessage(msg);
+    const clientId=document.getElementById("quoteClient").value||null;
+    const quoteDate=document.getElementById("quoteDate").value;
+    const validUntil=document.getElementById("quoteValidUntil").value||null;
+    const status=document.getElementById("quoteStatus").value;
+    const notes=document.getElementById("quoteNotes").value.trim()||null;
+    const totals=quoteTotals();
+    if(!clientId)return showMessage(msg,"Selecione o cliente.","error");
+    if(!quoteDate)return showMessage(msg,"Informe a data do orçamento.","error");
+    if(!quoteItemsDraft.length)return showMessage(msg,"Adicione pelo menos um item.","error");
+    const {data:{user}}=await supabaseClient.auth.getUser();
+    const {data:profile,error:profileError}=await supabaseClient.from("profiles").select("company_id").eq("id",user?.id).single();
+    if(profileError||!profile?.company_id)return showMessage(msg,"Não foi possível identificar a empresa do usuário.","error");
+    const payload={company_id:profile.company_id,client_id:clientId,quote_date:quoteDate,valid_until:validUntil,subtotal:totals.subtotal,discount:totals.discount,total:totals.total,status,notes,updated_at:new Date().toISOString()};
+    let quoteId=currentQuoteId;
+    if(quoteId){
+        const {error}=await supabaseClient.from("quotes").update(payload).eq("id",quoteId);
+        if(error)return showMessage(msg,error.message,"error");
+        const {error:delError}=await supabaseClient.from("quote_items").delete().eq("quote_id",quoteId);
+        if(delError)return showMessage(msg,delError.message,"error");
+    }else{
+        payload.created_by=user?.id||null;
+        const {data,error}=await supabaseClient.from("quotes").insert(payload).select("id").single();
+        if(error)return showMessage(msg,error.message,"error");
+        quoteId=data.id;
+    }
+    const itemsPayload=quoteItemsDraft.map(x=>({quote_id:quoteId,product_id:x.product_id||null,service_id:x.service_id||null,description:x.description,quantity:x.quantity,unit_price:x.unit_price,discount:x.discount||0,total:quoteItemTotal(x)}));
+    const {error:itemError}=await supabaseClient.from("quote_items").insert(itemsPayload);
+    if(itemError){
+        if(!currentQuoteId)await supabaseClient.from("quotes").delete().eq("id",quoteId);
+        return showMessage(msg,itemError.message,"error");
+    }
+    closeQuoteModal();await loadQuotes();
+}
+async function deleteQuote(id){
+    const item=quotesCache.find(x=>x.id===id);if(!item)return;
+    if(!confirm(`Excluir o orçamento #${item.quote_number||""}?`))return;
+    const {error}=await supabaseClient.from("quotes").delete().eq("id",id);
+    if(error){alert("Não foi possível excluir: "+error.message);return;}
+    await loadQuotes();
+}
+
+document.getElementById("newQuoteBtn").addEventListener("click",()=>openQuoteModal());
+document.getElementById("closeQuoteModal").addEventListener("click",closeQuoteModal);
+document.getElementById("cancelQuoteBtn").addEventListener("click",closeQuoteModal);
+document.getElementById("saveQuoteBtn").addEventListener("click",saveQuote);
+document.getElementById("addQuoteItemBtn").addEventListener("click",openQuoteItemModal);
+document.getElementById("closeQuoteItemModal").addEventListener("click",closeQuoteItemModal);
+document.getElementById("cancelQuoteItemBtn").addEventListener("click",closeQuoteItemModal);
+document.getElementById("saveQuoteItemBtn").addEventListener("click",saveQuoteItem);
+document.getElementById("quoteItemType").addEventListener("change",renderQuoteItemOptions);
+document.getElementById("quoteItemSelect").addEventListener("change",updateQuoteItemPrice);
+document.getElementById("backQuotesDashboardBtn").addEventListener("click",closeQuotes);
+document.getElementById("quoteSearch").addEventListener("input",()=>renderQuotes(quotesCache));
+document.getElementById("quoteStatusFilter").addEventListener("change",()=>renderQuotes(quotesCache));
+
 /* ---------- Módulo Financeiro ---------- */
 let currentFinanceId = null;
 let financeCache = [];
@@ -2916,6 +3204,7 @@ function showDashboardModules(){
     document.getElementById("salesPage").classList.add("hidden");
     document.getElementById("inventoryPage").classList.add("hidden");
     document.getElementById("financePage").classList.add("hidden");
+    document.getElementById("quotesPage").classList.add("hidden");
 }
 
 async function openProducts(){
