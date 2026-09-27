@@ -132,6 +132,8 @@ button{
 .back-btn{width:auto;margin:0;background:none;color:#2563eb;padding:0;font-weight:750}
 .top-action{width:auto;margin:0}
 .toolbar{display:flex;gap:12px;margin-bottom:16px}
+.toolbar input[type="date"]{max-width:180px}
+
 .toolbar input{max-width:520px}
 .table-wrap{overflow:auto;border:1px solid #e2e8f0;border-radius:16px;background:white}
 table{width:100%;border-collapse:collapse;min-width:780px}
@@ -314,6 +316,123 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
             </div>
 
 
+
+
+            <!-- MÓDULO AGENDA -->
+            <div class="module-page hidden" id="appointmentsPage">
+                <div class="module-header">
+                    <div>
+                        <button class="back-btn" id="backAppointmentsDashboardBtn">← Dashboard</button>
+                        <h2 style="margin:14px 0 5px">Agenda</h2>
+                        <div class="userinfo">Agendamentos de clientes, serviços e profissionais.</div>
+                    </div>
+                    <button class="primary top-action" id="newAppointmentBtn">+ Novo agendamento</button>
+                </div>
+
+                <div class="toolbar">
+                    <input id="appointmentDateFilter" type="date">
+                    <input id="appointmentSearch" type="search" placeholder="Pesquisar cliente ou serviço...">
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Horário</th>
+                                <th>Cliente</th>
+                                <th>Serviço</th>
+                                <th>Profissional</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointmentsTableBody">
+                            <tr><td colspan="7" class="empty">Carregando agenda...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- FORMULÁRIO AGENDAMENTO -->
+            <div class="modal hidden" id="appointmentModal">
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <div>
+                            <h3 id="appointmentModalTitle">Novo agendamento</h3>
+                            <div class="userinfo">O agendamento será salvo diretamente no Supabase.</div>
+                        </div>
+                        <button class="close-btn" id="closeAppointmentModal">×</button>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="appointmentClient">Cliente *</label>
+                            <select id="appointmentClient">
+                                <option value="">Selecione o cliente</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="appointmentService">Serviço *</label>
+                            <select id="appointmentService">
+                                <option value="">Selecione o serviço</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="appointmentProfessional">Profissional</label>
+                            <select id="appointmentProfessional">
+                                <option value="">Selecione o profissional</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="appointmentStatus">Status</label>
+                            <select id="appointmentStatus">
+                                <option value="SCHEDULED">Agendado</option>
+                                <option value="CONFIRMED">Confirmado</option>
+                                <option value="IN_PROGRESS">Em atendimento</option>
+                                <option value="COMPLETED">Concluído</option>
+                                <option value="CANCELLED">Cancelado</option>
+                                <option value="NO_SHOW">Não compareceu</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="appointmentDate">Data *</label>
+                            <input id="appointmentDate" type="date">
+                        </div>
+
+                        <div class="field">
+                            <label for="appointmentPrice">Valor</label>
+                            <input id="appointmentPrice" type="number" min="0" step="0.01" placeholder="0,00">
+                        </div>
+
+                        <div class="field">
+                            <label for="appointmentStart">Início *</label>
+                            <input id="appointmentStart" type="time">
+                        </div>
+
+                        <div class="field">
+                            <label for="appointmentEnd">Fim *</label>
+                            <input id="appointmentEnd" type="time">
+                        </div>
+
+                        <div class="field full">
+                            <label for="appointmentNotes">Observações</label>
+                            <textarea id="appointmentNotes" rows="3" placeholder="Observações do agendamento"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button class="secondary" id="cancelAppointmentBtn">Cancelar</button>
+                        <button class="primary" id="saveAppointmentBtn">Salvar agendamento</button>
+                    </div>
+
+                    <div class="message" id="appointmentMessage"></div>
+                </div>
+            </div>
 
             <!-- MÓDULO SERVIÇOS -->
             <div class="module-page hidden" id="servicesPage">
@@ -908,6 +1027,9 @@ async function loadDashboard(){
         if(module.code === "SERVICES"){
             card.addEventListener("click", openServices);
         }
+        if(module.code === "APPOINTMENTS"){
+            card.addEventListener("click", openAppointments);
+        }
         moduleCards.appendChild(card);
     });
 
@@ -933,6 +1055,381 @@ function escapeHtml(value){
 
 
 
+
+
+/* ---------- Módulo Agenda ---------- */
+let currentAppointmentId = null;
+let appointmentsCache = [];
+let appointmentClientsCache = [];
+let appointmentServicesCache = [];
+let appointmentProfessionalsCache = [];
+
+function appointmentStatusLabel(status){
+    const labels = {
+        SCHEDULED: "Agendado",
+        CONFIRMED: "Confirmado",
+        IN_PROGRESS: "Em atendimento",
+        COMPLETED: "Concluído",
+        CANCELLED: "Cancelado",
+        NO_SHOW: "Não compareceu"
+    };
+    return labels[status] || status || "—";
+}
+
+function formatDateBR(date){
+    if(!date) return "—";
+    const parts = date.split("-");
+    if(parts.length !== 3) return date;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+function formatMoney(value){
+    return "R$ " + Number(value || 0).toFixed(2).replace(".", ",");
+}
+
+async function openAppointments(){
+    hideDashboardModules();
+    document.getElementById("clientsPage").classList.add("hidden");
+    document.getElementById("productsPage").classList.add("hidden");
+    document.getElementById("servicesPage").classList.add("hidden");
+    document.getElementById("appointmentsPage").classList.remove("hidden");
+
+    const dateFilter = document.getElementById("appointmentDateFilter");
+    if(!dateFilter.value){
+        const today = new Date();
+        dateFilter.value = today.toISOString().slice(0,10);
+    }
+
+    await loadAppointmentDependencies();
+    await loadAppointments();
+}
+
+function closeAppointments(){
+    document.getElementById("appointmentsPage").classList.add("hidden");
+    showDashboardModules();
+}
+
+async function loadAppointmentDependencies(){
+    const [clientsResult, servicesResult, professionalsResult] = await Promise.all([
+        supabaseClient
+            .from("clients")
+            .select("id,name")
+            .eq("active", true)
+            .order("name", {ascending:true}),
+
+        supabaseClient
+            .from("services")
+            .select("id,name,price,duration_minutes")
+            .eq("active", true)
+            .order("name", {ascending:true}),
+
+        supabaseClient
+            .from("profiles")
+            .select("id,full_name,email,role")
+            .eq("active", true)
+            .neq("role", "PLATFORM_ADMIN")
+            .order("full_name", {ascending:true})
+    ]);
+
+    appointmentClientsCache = clientsResult.data || [];
+    appointmentServicesCache = servicesResult.data || [];
+    appointmentProfessionalsCache = professionalsResult.data || [];
+
+    const clientSelect = document.getElementById("appointmentClient");
+    clientSelect.innerHTML = '<option value="">Selecione o cliente</option>';
+    appointmentClientsCache.forEach(client => {
+        const option = document.createElement("option");
+        option.value = client.id;
+        option.textContent = client.name;
+        clientSelect.appendChild(option);
+    });
+
+    const serviceSelect = document.getElementById("appointmentService");
+    serviceSelect.innerHTML = '<option value="">Selecione o serviço</option>';
+    appointmentServicesCache.forEach(service => {
+        const option = document.createElement("option");
+        option.value = service.id;
+        option.textContent = `${service.name} — ${formatMoney(service.price)}`;
+        option.dataset.price = service.price || 0;
+        option.dataset.duration = service.duration_minutes || 30;
+        serviceSelect.appendChild(option);
+    });
+
+    const professionalSelect = document.getElementById("appointmentProfessional");
+    professionalSelect.innerHTML = '<option value="">Selecione o profissional</option>';
+    appointmentProfessionalsCache.forEach(professional => {
+        const option = document.createElement("option");
+        option.value = professional.id;
+        option.textContent = professional.full_name || professional.email || "Usuário";
+        professionalSelect.appendChild(option);
+    });
+}
+
+async function loadAppointments(){
+    const tbody = document.getElementById("appointmentsTableBody");
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Carregando agenda...</td></tr>';
+
+    let query = supabaseClient
+        .from("appointments")
+        .select(`
+            id,
+            client_id,
+            service_id,
+            professional_id,
+            appointment_date,
+            start_time,
+            end_time,
+            status,
+            price,
+            notes
+        `)
+        .order("appointment_date", {ascending:true})
+        .order("start_time", {ascending:true});
+
+    const selectedDate = document.getElementById("appointmentDateFilter").value;
+    if(selectedDate){
+        query = query.eq("appointment_date", selectedDate);
+    }
+
+    const { data, error } = await query;
+
+    if(error){
+        tbody.innerHTML = `<tr><td colspan="7" class="empty">Erro ao carregar agenda: ${escapeHtml(error.message)}</td></tr>`;
+        return;
+    }
+
+    appointmentsCache = data || [];
+    renderAppointments(appointmentsCache);
+}
+
+function renderAppointments(list){
+    const tbody = document.getElementById("appointmentsTableBody");
+    const term = document.getElementById("appointmentSearch").value.toLowerCase().trim();
+
+    const filtered = list.filter(item => {
+        const client = appointmentClientsCache.find(c => c.id === item.client_id);
+        const service = appointmentServicesCache.find(s => s.id === item.service_id);
+        const text = `${client?.name || ""} ${service?.name || ""}`.toLowerCase();
+        return !term || text.includes(term);
+    });
+
+    if(!filtered.length){
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">Nenhum agendamento encontrado.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = "";
+
+    filtered.forEach(item => {
+        const client = appointmentClientsCache.find(c => c.id === item.client_id);
+        const service = appointmentServicesCache.find(s => s.id === item.service_id);
+        const professional = appointmentProfessionalsCache.find(p => p.id === item.professional_id);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>
+                <strong>${escapeHtml((item.start_time || "").slice(0,5))} - ${escapeHtml((item.end_time || "").slice(0,5))}</strong>
+                <br><span class="userinfo">${formatDateBR(item.appointment_date)}</span>
+            </td>
+            <td>${escapeHtml(client?.name || "Cliente removido")}</td>
+            <td>${escapeHtml(service?.name || "Serviço removido")}</td>
+            <td>${escapeHtml(professional?.full_name || "—")}</td>
+            <td>${formatMoney(item.price)}</td>
+            <td><span class="badge">${appointmentStatusLabel(item.status)}</span></td>
+            <td>
+                <button class="action-btn edit-appointment" data-id="${item.id}">Editar</button>
+                <button class="action-btn delete delete-appointment" data-id="${item.id}">Excluir</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll(".edit-appointment").forEach(btn => {
+        btn.addEventListener("click", () => editAppointment(btn.dataset.id));
+    });
+
+    tbody.querySelectorAll(".delete-appointment").forEach(btn => {
+        btn.addEventListener("click", () => deleteAppointment(btn.dataset.id));
+    });
+}
+
+function openAppointmentModal(appointment=null){
+    currentAppointmentId = appointment?.id || null;
+    document.getElementById("appointmentModalTitle").textContent =
+        appointment ? "Editar agendamento" : "Novo agendamento";
+
+    document.getElementById("appointmentClient").value = appointment?.client_id || "";
+    document.getElementById("appointmentService").value = appointment?.service_id || "";
+    document.getElementById("appointmentProfessional").value = appointment?.professional_id || "";
+    document.getElementById("appointmentStatus").value = appointment?.status || "SCHEDULED";
+    document.getElementById("appointmentDate").value =
+        appointment?.appointment_date || document.getElementById("appointmentDateFilter").value || "";
+    document.getElementById("appointmentPrice").value = appointment?.price ?? "";
+    document.getElementById("appointmentStart").value = appointment?.start_time?.slice(0,5) || "";
+    document.getElementById("appointmentEnd").value = appointment?.end_time?.slice(0,5) || "";
+    document.getElementById("appointmentNotes").value = appointment?.notes || "";
+
+    clearMessage(document.getElementById("appointmentMessage"));
+    document.getElementById("appointmentModal").classList.remove("hidden");
+}
+
+function closeAppointmentModal(){
+    document.getElementById("appointmentModal").classList.add("hidden");
+    currentAppointmentId = null;
+}
+
+async function editAppointment(id){
+    const { data, error } = await supabaseClient
+        .from("appointments")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+    if(error){
+        alert("Não foi possível carregar o agendamento: " + error.message);
+        return;
+    }
+
+    openAppointmentModal(data);
+}
+
+async function saveAppointment(){
+    const message = document.getElementById("appointmentMessage");
+    clearMessage(message);
+
+    const clientId = document.getElementById("appointmentClient").value;
+    const serviceId = document.getElementById("appointmentService").value;
+    const date = document.getElementById("appointmentDate").value;
+    const start = document.getElementById("appointmentStart").value;
+    const end = document.getElementById("appointmentEnd").value;
+
+    if(!clientId || !serviceId || !date || !start || !end){
+        showMessage(message, "Preencha cliente, serviço, data, início e fim.", "error");
+        return;
+    }
+
+    if(end <= start){
+        showMessage(message, "O horário final precisa ser maior que o horário inicial.", "error");
+        return;
+    }
+
+    const payload = {
+        client_id: clientId,
+        service_id: serviceId,
+        professional_id: document.getElementById("appointmentProfessional").value || null,
+        appointment_date: date,
+        start_time: start,
+        end_time: end,
+        status: document.getElementById("appointmentStatus").value,
+        price: Number(document.getElementById("appointmentPrice").value || 0),
+        notes: document.getElementById("appointmentNotes").value.trim() || null,
+        updated_at: new Date().toISOString()
+    };
+
+    let result;
+
+    if(currentAppointmentId){
+        result = await supabaseClient
+            .from("appointments")
+            .update(payload)
+            .eq("id", currentAppointmentId);
+    }else{
+        const { data: { user } } = await supabaseClient.auth.getUser();
+
+        const { data: profile, error: profileError } = await supabaseClient
+            .from("profiles")
+            .select("id,company_id")
+            .eq("id", user.id)
+            .single();
+
+        if(profileError || !profile?.company_id){
+            showMessage(message, "Não foi possível identificar a empresa do usuário.", "error");
+            return;
+        }
+
+        payload.company_id = profile.company_id;
+        payload.created_by = user.id;
+
+        result = await supabaseClient.from("appointments").insert(payload);
+    }
+
+    if(result.error){
+        showMessage(message, result.error.message, "error");
+        return;
+    }
+
+    closeAppointmentModal();
+    await loadAppointments();
+}
+
+async function deleteAppointment(id){
+    const appointment = appointmentsCache.find(a => a.id === id);
+    if(!appointment) return;
+
+    if(!confirm("Excluir este agendamento?")) return;
+
+    const { error } = await supabaseClient
+        .from("appointments")
+        .delete()
+        .eq("id", id);
+
+    if(error){
+        alert("Não foi possível excluir: " + error.message);
+        return;
+    }
+
+    await loadAppointments();
+}
+
+document.getElementById("newAppointmentBtn").addEventListener("click", async () => {
+    await loadAppointmentDependencies();
+    openAppointmentModal();
+});
+
+document.getElementById("closeAppointmentModal").addEventListener("click", closeAppointmentModal);
+document.getElementById("cancelAppointmentBtn").addEventListener("click", closeAppointmentModal);
+document.getElementById("saveAppointmentBtn").addEventListener("click", saveAppointment);
+document.getElementById("backAppointmentsDashboardBtn").addEventListener("click", closeAppointments);
+
+document.getElementById("appointmentDateFilter").addEventListener("change", loadAppointments);
+
+document.getElementById("appointmentSearch").addEventListener("input", () => {
+    renderAppointments(appointmentsCache);
+});
+
+document.getElementById("appointmentService").addEventListener("change", () => {
+    const option = document.getElementById("appointmentService").selectedOptions[0];
+    if(!option || !option.value) return;
+
+    const price = Number(option.dataset.price || 0);
+    const duration = Number(option.dataset.duration || 30);
+
+    document.getElementById("appointmentPrice").value = price;
+
+    const start = document.getElementById("appointmentStart").value;
+    if(start){
+        const [hours, minutes] = start.split(":").map(Number);
+        const date = new Date();
+        date.setHours(hours, minutes + duration, 0, 0);
+        document.getElementById("appointmentEnd").value =
+            `${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    }
+});
+
+document.getElementById("appointmentStart").addEventListener("change", () => {
+    const service = document.getElementById("appointmentService").selectedOptions[0];
+    const start = document.getElementById("appointmentStart").value;
+
+    if(!service?.value || !start) return;
+
+    const duration = Number(service.dataset.duration || 30);
+    const [hours, minutes] = start.split(":").map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes + duration, 0, 0);
+
+    document.getElementById("appointmentEnd").value =
+        `${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+});
 
 /* ---------- Módulo Serviços ---------- */
 let currentServiceId = null;
