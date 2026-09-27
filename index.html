@@ -549,7 +549,7 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
                         <h2 style="margin:14px 0 5px">Ordens de Serviço</h2>
                         <div class="userinfo">Controle de serviços, diagnósticos, soluções e itens utilizados.</div>
                     </div>
-                    <button type="button" class="primary top-action" id="newServiceOrderBtn" onclick="(function(){const m=document.getElementById('serviceOrderModal'); if(m){m.classList.remove('hidden');} const d=document.getElementById('serviceOrderOpeningDate'); if(d && !d.value){d.value=new Date().toISOString().slice(0,10);} const t=document.getElementById('serviceOrderModalTitle'); if(t){t.textContent='Nova ordem de serviço';} const c=document.getElementById('serviceOrderClient'); if(c){c.value='';} if(typeof loadServiceOrderDependencies==='function'){loadServiceOrderDependencies().catch(e=>console.error(e));} })()">+ Nova OS</button>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="secondary top-action" id="refreshServiceOrdersBtn" onclick="loadServiceOrders()">↻ Atualizar</button><button type="button" class="primary top-action" id="newServiceOrderBtn" onclick="openServiceOrderModal()">+ Nova OS</button></div>
                 </div>
                 <div class="toolbar">
                     <input id="serviceOrderSearch" type="search" placeholder="Pesquisar por cliente ou número da OS...">
@@ -2967,59 +2967,28 @@ async function loadServiceOrders(){
     const body=document.getElementById("serviceOrdersTableBody");
     if(!body) return;
     body.innerHTML='<tr><td colspan="7" class="empty">Carregando ordens de serviço...</td></tr>';
-
-    try {
-        const {data:{user}, error:userError}=await supabaseClient.auth.getUser();
-        if(userError || !user){
-            body.innerHTML='<tr><td colspan="7" class="empty">Usuário não autenticado.</td></tr>';
-            return;
-        }
-
-        const {data:profile, error:profileError}=await supabaseClient
-            .from("profiles")
-            .select("company_id")
-            .eq("id", user.id)
-            .single();
-
-        if(profileError || !profile?.company_id){
-            body.innerHTML=`<tr><td colspan="7" class="empty">Não foi possível identificar a empresa: ${escapeHtml(profileError?.message||"perfil não encontrado")}</td></tr>`;
-            return;
-        }
-
-        const {data:orders,error}=await supabaseClient
-            .from("service_orders")
-            .select("id,company_id,client_id,service_order_number,opening_date,scheduled_date,completion_date,status,subtotal,discount,total,description,diagnosis,solution,notes,created_by,created_at,updated_at")
-            .eq("company_id", profile.company_id)
-            .order("created_at",{ascending:false});
-
-        if(error){
-            body.innerHTML=`<tr><td colspan="7" class="empty">Erro ao carregar OS: ${escapeHtml(error.message)}</td></tr>`;
-            return;
-        }
-
+    try{
+        const {data:{user},error:userError}=await supabaseClient.auth.getUser();
+        if(userError||!user) throw new Error("Usuário não autenticado.");
+        const {data:profile,error:profileError}=await supabaseClient.from("profiles").select("company_id").eq("id",user.id).maybeSingle();
+        if(profileError) throw profileError;
+        if(!profile?.company_id) throw new Error("Perfil sem empresa vinculada.");
+        const {data:orders,error}=await supabaseClient.from("service_orders").select("*").eq("company_id",profile.company_id).order("created_at",{ascending:false});
+        if(error) throw error;
         const list=orders||[];
-        const clientIds=[...new Set(list.map(x=>x.client_id).filter(Boolean))];
-        const clientsMap={};
-        if(clientIds.length){
-            const {data:clients}=await supabaseClient.from("clients").select("id,name").in("id",clientIds);
-            (clients||[]).forEach(c=>clientsMap[c.id]=c.name);
-        }
-
-        serviceOrdersCache=list.map(x=>({
-            ...x,
-            clients:{name:clientsMap[x.client_id]||"—"}
-        }));
-
-        // Garante que ao abrir a tela o filtro esteja mostrando todas as OS.
-        const statusFilter=document.getElementById("serviceOrderStatusFilter");
-        if(statusFilter && !statusFilter.value) statusFilter.value="ALL";
-
+        const ids=[...new Set(list.map(o=>o.client_id).filter(Boolean))];
+        const cmap={};
+        if(ids.length){const r=await supabaseClient.from("clients").select("id,name").in("id",ids); if(r.error) console.warn("Clientes:",r.error.message); (r.data||[]).forEach(c=>cmap[c.id]=c.name);}
+        serviceOrdersCache=list.map(o=>({...o,clients:{name:cmap[o.client_id]||"—"}}));
+        const filter=document.getElementById("serviceOrderStatusFilter"); if(filter) filter.value="ALL";
         renderServiceOrders(serviceOrdersCache);
-    } catch(e) {
-        console.error(e);
-        body.innerHTML=`<tr><td colspan="7" class="empty">Erro inesperado ao carregar OS: ${escapeHtml(e.message||String(e))}</td></tr>`;
+        if(!list.length) body.innerHTML='<tr><td colspan="7" class="empty">Nenhuma OS encontrada no banco para esta empresa.</td></tr>';
+    }catch(e){
+        console.error("loadServiceOrders:",e);
+        body.innerHTML='<tr><td colspan="7" class="empty">Erro ao carregar OS: '+escapeHtml(e.message||String(e))+'</td></tr>';
     }
 }
+
 function renderServiceOrders(list){
     const term=(document.getElementById("serviceOrderSearch").value||"").toLowerCase().trim();
     const status=document.getElementById("serviceOrderStatusFilter").value;
@@ -3118,7 +3087,8 @@ async function deleteServiceOrder(id){
     await loadServiceOrders();
 }
 
-document.getElementById("newServiceOrderBtn").addEventListener("click",()=>openServiceOrderModal());
+document.getElementById("newServiceOrderBtn")?.addEventListener("click",()=>openServiceOrderModal());
+window.forceLoadServiceOrders=loadServiceOrders;
 document.getElementById("closeServiceOrderModal").addEventListener("click",closeServiceOrderModal);
 document.getElementById("cancelServiceOrderBtn").addEventListener("click",closeServiceOrderModal);
 document.getElementById("saveServiceOrderBtn").addEventListener("click",saveServiceOrder);
