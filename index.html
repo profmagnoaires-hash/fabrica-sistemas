@@ -549,7 +549,7 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
                         <h2 style="margin:14px 0 5px">Ordens de Serviço</h2>
                         <div class="userinfo">Controle de serviços, diagnósticos, soluções e itens utilizados.</div>
                     </div>
-                    <button type="button" class="primary top-action" id="newServiceOrderBtn" onclick="openServiceOrderModal()">+ Nova OS</button>
+                    <button type="button" class="primary top-action" id="newServiceOrderBtn" onclick="(function(){const m=document.getElementById('serviceOrderModal'); if(m){m.classList.remove('hidden');} const d=document.getElementById('serviceOrderOpeningDate'); if(d && !d.value){d.value=new Date().toISOString().slice(0,10);} const t=document.getElementById('serviceOrderModalTitle'); if(t){t.textContent='Nova ordem de serviço';} const c=document.getElementById('serviceOrderClient'); if(c){c.value='';} if(typeof loadServiceOrderDependencies==='function'){loadServiceOrderDependencies().catch(e=>console.error(e));} })()">+ Nova OS</button>
                 </div>
                 <div class="toolbar">
                     <input id="serviceOrderSearch" type="search" placeholder="Pesquisar por cliente ou número da OS...">
