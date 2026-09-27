@@ -2990,7 +2990,8 @@ function renderServiceOrders(list){
 }
 async function openServiceOrderModal(item=null){
     currentServiceOrderId=item?.id||null;
-    await loadServiceOrderDependencies();
+    // Abre o formulário imediatamente. O carregamento dos dados ocorre depois,
+    // para que uma falha/rede lenta no Supabase não faça o botão parecer sem resposta.
     document.getElementById("serviceOrderModalTitle").textContent=item?"Editar ordem de serviço":"Nova ordem de serviço";
     document.getElementById("serviceOrderClient").value=item?.client_id||"";
     document.getElementById("serviceOrderOpeningDate").value=item?.opening_date||new Date().toISOString().slice(0,10);
@@ -3007,7 +3008,17 @@ async function openServiceOrderModal(item=null){
         if(error){alert("Não foi possível carregar os itens: "+error.message);return;}
         serviceOrderItemsDraft=(data||[]).map(x=>({id:x.id,item_type:x.product_id?"PRODUCT":"SERVICE",product_id:x.product_id,service_id:x.service_id,description:x.description,quantity:x.quantity,unit_price:x.unit_price,discount:x.discount||0}));
     }
-    renderServiceOrderItems();clearMessage(document.getElementById("serviceOrderMessage"));document.getElementById("serviceOrderModal").classList.remove("hidden");
+    renderServiceOrderItems();
+    clearMessage(document.getElementById("serviceOrderMessage"));
+    document.getElementById("serviceOrderModal").classList.remove("hidden");
+
+    // Carrega clientes/produtos/serviços depois que o modal já estiver visível.
+    try {
+        await loadServiceOrderDependencies();
+    } catch (e) {
+        showMessage(document.getElementById("serviceOrderMessage"), "Não foi possível carregar clientes, produtos ou serviços. Atualize a página e tente novamente.", "error");
+        console.error(e);
+    }
 }
 function closeServiceOrderModal(){document.getElementById("serviceOrderModal").classList.add("hidden");currentServiceOrderId=null;serviceOrderItemsDraft=[];}
 async function saveServiceOrder(){
