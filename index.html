@@ -281,6 +281,56 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
                 </div>
             </div>
 
+            <!-- CONFIGURAÇÕES / CAMPOS PERSONALIZADOS -->
+            <div class="module-page hidden" id="customFieldsPage">
+                <div class="module-header">
+                    <div>
+                        <button class="back-btn" id="backCustomFieldsBtn">← Dashboard</button>
+                        <h2 style="margin:14px 0 5px">⚙️ Campos personalizados</h2>
+                        <div class="userinfo">Crie e controle campos adicionais para cada módulo da sua empresa.</div>
+                    </div>
+                    <button class="primary top-action" id="newCustomFieldBtn">+ Novo campo</button>
+                </div>
+                <div class="toolbar">
+                    <select id="customFieldModuleFilter">
+                        <option value="CLIENTS">Clientes</option>
+                        <option value="PRODUCTS">Produtos</option>
+                        <option value="SERVICES">Serviços</option>
+                        <option value="APPOINTMENTS">Agenda</option>
+                        <option value="SALES">Vendas</option>
+                        <option value="INVENTORY">Estoque</option>
+                        <option value="FINANCE">Financeiro</option>
+                        <option value="QUOTES">Orçamentos</option>
+                        <option value="SERVICE_ORDERS">Ordens de Serviço</option>
+                    </select>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Visível</th><th>Ativo</th><th>Ordem</th><th>Ações</th></tr></thead>
+                        <tbody id="customFieldsTableBody"><tr><td colspan="7" class="empty">Carregando...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal hidden" id="customFieldModal">
+                <div class="modal-card">
+                    <div class="modal-header"><h3 id="customFieldModalTitle">Novo campo</h3><button class="modal-close" id="closeCustomFieldModal">×</button></div>
+                    <div class="form-grid">
+                        <div class="field"><label for="customFieldModule">Módulo</label><select id="customFieldModule"><option value="CLIENTS">Clientes</option><option value="PRODUCTS">Produtos</option><option value="SERVICES">Serviços</option><option value="APPOINTMENTS">Agenda</option><option value="SALES">Vendas</option><option value="INVENTORY">Estoque</option><option value="FINANCE">Financeiro</option><option value="QUOTES">Orçamentos</option><option value="SERVICE_ORDERS">Ordens de Serviço</option></select></div>
+                        <div class="field"><label for="customFieldName">Nome técnico *</label><input id="customFieldName" placeholder="ex.: instagram"></div>
+                        <div class="field"><label for="customFieldLabel">Nome exibido *</label><input id="customFieldLabel" placeholder="ex.: Instagram"></div>
+                        <div class="field"><label for="customFieldType">Tipo</label><select id="customFieldType"><option value="TEXT">Texto</option><option value="NUMBER">Número</option><option value="DATE">Data</option><option value="BOOLEAN">Sim/Não</option><option value="SELECT">Seleção</option><option value="TEXTAREA">Texto longo</option><option value="PHONE">Telefone</option><option value="EMAIL">E-mail</option><option value="CURRENCY">Moeda</option></select></div>
+                        <div class="field"><label for="customFieldOrder">Ordem</label><input id="customFieldOrder" type="number" value="0"></div>
+                        <div class="field full"><label for="customFieldOptions">Opções (somente Seleção)</label><input id="customFieldOptions" placeholder="Ex.: P, M, G, GG"></div>
+                        <div class="field"><label><input id="customFieldRequired" type="checkbox"> Obrigatório</label></div>
+                        <div class="field"><label><input id="customFieldVisible" type="checkbox" checked> Visível</label></div>
+                        <div class="field"><label><input id="customFieldActive" type="checkbox" checked> Ativo</label></div>
+                    </div>
+                    <div class="modal-actions"><button class="secondary" id="cancelCustomFieldBtn">Cancelar</button><button class="primary" id="saveCustomFieldBtn">Salvar campo</button></div>
+                    <div class="message" id="customFieldMessage"></div>
+                </div>
+            </div>
+
             <!-- MÓDULO CLIENTES -->
             <div class="module-page hidden" id="clientsPage">
                 <div class="module-header">
@@ -1486,6 +1536,8 @@ async function loadDashboard(){
         return;
     }
 
+    window.currentUserProfile = profile;
+
     let company = null;
 
     if(profile.company_id){
@@ -1586,6 +1638,15 @@ async function loadDashboard(){
         }
         moduleCards.appendChild(card);
     });
+
+    if(["OWNER","ADMIN","PLATFORM_ADMIN"].includes(profile.role)){
+        const settingsCard = document.createElement("div");
+        settingsCard.className = "card";
+        settingsCard.style.cursor = "pointer";
+        settingsCard.innerHTML = `<div class="icon">⚙️</div><h3>Configurações</h3><p>Campos personalizados e configurações da empresa.</p>`;
+        settingsCard.addEventListener("click", openCustomFields);
+        moduleCards.appendChild(settingsCard);
+    }
 
     showDashboard();
 }
@@ -3532,6 +3593,7 @@ function showDashboardModules(){
     document.getElementById("financePage").classList.add("hidden");
     document.getElementById("quotesPage").classList.add("hidden");
     document.getElementById("serviceOrdersPage").classList.add("hidden");
+    document.getElementById("customFieldsPage").classList.add("hidden");
 }
 
 async function openProducts(){
@@ -3974,6 +4036,66 @@ document.getElementById("clientSearch").addEventListener("input", (event) => {
     renderClients(filtered);
 });
 
+/* ---------- Campos personalizados ---------- */
+let customFieldsCache = [];
+let currentCustomFieldId = null;
+
+function openCustomFields(){
+    hideDashboardModules();
+    document.getElementById("customFieldsPage").classList.remove("hidden");
+    loadCustomFields();
+}
+function closeCustomFields(){
+    document.getElementById("customFieldsPage").classList.add("hidden");
+    showDashboardModules();
+}
+function openCustomFieldModal(field=null){
+    currentCustomFieldId = field?.id || null;
+    document.getElementById("customFieldModalTitle").textContent = field ? "Editar campo" : "Novo campo";
+    document.getElementById("customFieldModule").value = field?.module_code || document.getElementById("customFieldModuleFilter").value;
+    document.getElementById("customFieldName").value = field?.field_name || "";
+    document.getElementById("customFieldLabel").value = field?.field_label || "";
+    document.getElementById("customFieldType").value = field?.field_type || "TEXT";
+    document.getElementById("customFieldOrder").value = field?.sort_order ?? 0;
+    document.getElementById("customFieldOptions").value = Array.isArray(field?.options) ? field.options.join(", ") : "";
+    document.getElementById("customFieldRequired").checked = !!field?.required;
+    document.getElementById("customFieldVisible").checked = field ? !!field.visible : true;
+    document.getElementById("customFieldActive").checked = field ? !!field.active : true;
+    clearMessage(document.getElementById("customFieldMessage"));
+    document.getElementById("customFieldModal").classList.remove("hidden");
+}
+function closeCustomFieldModal(){ document.getElementById("customFieldModal").classList.add("hidden"); }
+async function loadCustomFields(){
+    const moduleCode = document.getElementById("customFieldModuleFilter").value;
+    const tbody = document.getElementById("customFieldsTableBody");
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Carregando campos...</td></tr>';
+    const { data, error } = await supabaseClient.from("custom_fields").select("*").eq("module_code", moduleCode).order("sort_order",{ascending:true}).order("field_label",{ascending:true});
+    if(error){ tbody.innerHTML = `<tr><td colspan="7" class="empty">Erro: ${escapeHtml(error.message)}</td></tr>`; return; }
+    customFieldsCache = data || [];
+    if(!customFieldsCache.length){ tbody.innerHTML='<tr><td colspan="7" class="empty">Nenhum campo personalizado criado.</td></tr>'; return; }
+    tbody.innerHTML = customFieldsCache.map(f=>`<tr><td><strong>${escapeHtml(f.field_label)}</strong><br><small>${escapeHtml(f.field_name)}</small></td><td>${escapeHtml(f.field_type)}</td><td>${f.required?'Sim':'Não'}</td><td>${f.visible?'Sim':'Não'}</td><td>${f.active?'🟢':'🔴'}</td><td>${f.sort_order}</td><td><button class="small-btn" onclick="editCustomField('${f.id}')">Editar</button> <button class="small-btn" onclick="toggleCustomField('${f.id}')">${f.active?'Desativar':'Ativar'}</button> <button class="small-btn danger" onclick="deleteCustomField('${f.id}')">Excluir</button></td></tr>`).join("");
+}
+window.editCustomField = id => openCustomFieldModal(customFieldsCache.find(f=>f.id===id));
+window.toggleCustomField = async id => { const f=customFieldsCache.find(x=>x.id===id); if(!f)return; const {error}=await supabaseClient.from("custom_fields").update({active:!f.active,updated_at:new Date().toISOString()}).eq("id",id); if(error) return alert(error.message); loadCustomFields(); };
+window.deleteCustomField = async id => { if(!confirm("Excluir este campo personalizado?"))return; const {error}=await supabaseClient.from("custom_fields").delete().eq("id",id); if(error)return alert(error.message); loadCustomFields(); };
+async function saveCustomField(){
+    const msg=document.getElementById("customFieldMessage"); clearMessage(msg);
+    const module_code=document.getElementById("customFieldModule").value;
+    const field_name=document.getElementById("customFieldName").value.trim().toLowerCase().replace(/\s+/g,"_");
+    const field_label=document.getElementById("customFieldLabel").value.trim();
+    if(!field_name||!field_label) return showMessage(msg,"Informe o nome técnico e o nome exibido.","error");
+    const {data:{user}}=await supabaseClient.auth.getUser();
+    const {data:profile,error:pe}=await supabaseClient.from("profiles").select("company_id,role").eq("id",user.id).single();
+    if(pe||!profile?.company_id) return showMessage(msg,"Não foi possível identificar a empresa.","error");
+    if(!["OWNER","ADMIN","PLATFORM_ADMIN"].includes(profile.role)) return showMessage(msg,"Somente administradores podem configurar campos.","error");
+    const type=document.getElementById("customFieldType").value;
+    const options=type==="SELECT" ? document.getElementById("customFieldOptions").value.split(",").map(x=>x.trim()).filter(Boolean) : [];
+    const payload={company_id:profile.company_id,module_code,field_name,field_label,field_type:type,required:document.getElementById("customFieldRequired").checked,visible:document.getElementById("customFieldVisible").checked,active:document.getElementById("customFieldActive").checked,options,sort_order:Number(document.getElementById("customFieldOrder").value)||0,updated_at:new Date().toISOString()};
+    const result=currentCustomFieldId ? await supabaseClient.from("custom_fields").update(payload).eq("id",currentCustomFieldId) : await supabaseClient.from("custom_fields").insert(payload);
+    if(result.error) return showMessage(msg,result.error.message,"error");
+    closeCustomFieldModal(); await loadCustomFields();
+}
+
 /* ---------- Inicialização ---------- */
 supabaseClient.auth.onAuthStateChange(async (event, session) => {
     if(event === "SIGNED_OUT"){
@@ -4008,6 +4130,13 @@ supabaseClient.auth.onAuthStateChange(async (event, session) => {
     }
 })();
 
+
+document.getElementById("newCustomFieldBtn").addEventListener("click",()=>openCustomFieldModal());
+document.getElementById("closeCustomFieldModal").addEventListener("click",closeCustomFieldModal);
+document.getElementById("cancelCustomFieldBtn").addEventListener("click",closeCustomFieldModal);
+document.getElementById("saveCustomFieldBtn").addEventListener("click",saveCustomField);
+document.getElementById("backCustomFieldsBtn").addEventListener("click",closeCustomFields);
+document.getElementById("customFieldModuleFilter").addEventListener("change",loadCustomFields);
 
 /* Eventos do Estoque */
 document.getElementById("newInventoryMovementBtn").addEventListener("click", async()=>{ await loadInventory(); openInventoryModal(); });
