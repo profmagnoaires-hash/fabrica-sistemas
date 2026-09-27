@@ -305,10 +305,39 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
                     </select>
                 </div>
                 <div class="table-wrap">
+                    <h3 style="margin:0 0 10px">Campos padrão do sistema</h3>
+                    <div class="userinfo" style="margin-bottom:12px">Os campos que já vêm na plataforma também podem ter nome, obrigatoriedade, visibilidade e ordem configurados. Campos estruturais protegidos não podem ser desativados.</div>
+                    <table>
+                        <thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Visível</th><th>Ativo</th><th>Ordem</th><th>Ações</th></tr></thead>
+                        <tbody id="standardFieldsTableBody"><tr><td colspan="7" class="empty">Carregando...</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="table-wrap" style="margin-top:18px">
+                    <h3 style="margin:0 0 10px">Campos personalizados</h3>
                     <table>
                         <thead><tr><th>Campo</th><th>Tipo</th><th>Obrigatório</th><th>Visível</th><th>Ativo</th><th>Ordem</th><th>Ações</th></tr></thead>
                         <tbody id="customFieldsTableBody"><tr><td colspan="7" class="empty">Carregando...</td></tr></tbody>
                     </table>
+                </div>
+            </div>
+
+
+            <div class="modal hidden" id="standardFieldModal">
+                <div class="modal-card">
+                    <div class="modal-header"><h3 id="standardFieldModalTitle">Editar campo padrão</h3><button class="modal-close" id="closeStandardFieldModal">×</button></div>
+                    <div class="form-grid">
+                        <div class="field"><label for="standardFieldModule">Módulo</label><input id="standardFieldModule" readonly></div>
+                        <div class="field"><label for="standardFieldName">Nome técnico</label><input id="standardFieldName" readonly></div>
+                        <div class="field full"><label for="standardFieldLabel">Nome exibido *</label><input id="standardFieldLabel" placeholder="Nome exibido"></div>
+                        <div class="field"><label for="standardFieldType">Tipo</label><input id="standardFieldType" readonly></div>
+                        <div class="field"><label for="standardFieldOrder">Ordem</label><input id="standardFieldOrder" type="number" value="0"></div>
+                        <div class="field"><label><input id="standardFieldRequired" type="checkbox"> Obrigatório</label></div>
+                        <div class="field"><label><input id="standardFieldVisible" type="checkbox" checked> Visível</label></div>
+                        <div class="field"><label><input id="standardFieldActive" type="checkbox" checked> Ativo</label></div>
+                    </div>
+                    <div class="userinfo" id="standardFieldProtectionMessage" style="margin-top:8px"></div>
+                    <div class="modal-actions"><button class="secondary" id="cancelStandardFieldBtn">Cancelar</button><button class="primary" id="saveStandardFieldBtn">Salvar configuração</button></div>
+                    <div class="message" id="standardFieldMessage"></div>
                 </div>
             </div>
 
@@ -1878,7 +1907,7 @@ function renderAppointments(list){
     });
 }
 
-function openAppointmentModal(appointment=null){
+async function openAppointmentModal(appointment=null){
     currentAppointmentId = appointment?.id || null;
     document.getElementById("appointmentModalTitle").textContent =
         appointment ? "Editar agendamento" : "Novo agendamento";
@@ -1896,6 +1925,8 @@ function openAppointmentModal(appointment=null){
 
     clearMessage(document.getElementById("appointmentMessage"));
     document.getElementById("appointmentModal").classList.remove("hidden");
+    applyStandardFieldSettings("APPOINTMENTS");
+    await loadModuleCustomFields("APPOINTMENTS", currentAppointmentId);
 }
 
 function closeAppointmentModal(){
@@ -1952,6 +1983,7 @@ async function saveAppointment(){
     };
 
     let result;
+    let appointmentCompanyId = null;
 
     if(currentAppointmentId){
         result = await supabaseClient
@@ -1972,11 +2004,11 @@ async function saveAppointment(){
             return;
         }
 
-        productCompanyId = profile.company_id;
+        appointmentCompanyId = profile.company_id;
         payload.company_id = profile.company_id;
         payload.created_by = user.id;
 
-        result = await supabaseClient.from("appointments").insert(payload);
+        result = await supabaseClient.from("appointments").insert(payload).select("id").single();
     }
 
     if(result.error){
@@ -1984,6 +2016,10 @@ async function saveAppointment(){
         return;
     }
 
+    const appointmentId = currentAppointmentId || result.data?.id;
+    if(!appointmentId){ showMessage(message,"Agendamento salvo, mas não foi possível identificar o registro.","error"); return; }
+    const customError = await saveModuleCustomFieldValues("APPOINTMENTS", appointmentId, appointmentCompanyId || (await getCurrentCompanyId()));
+    if(customError){ showMessage(message,customError,"error"); return; }
     closeAppointmentModal();
     await loadAppointments();
 }
@@ -2315,6 +2351,8 @@ async function openSaleModal(sale=null){
     }
 
     document.getElementById("saleModal").classList.remove("hidden");
+    applyStandardFieldSettings("SALES");
+    await loadModuleCustomFields("SALES", currentSaleId);
 }
 
 function closeSaleModal(){
@@ -2496,6 +2534,8 @@ async function saveSale(){
         return showMessage(message, itemsError.message, "error");
     }
 
+    const customError = await saveModuleCustomFieldValues("SALES", saleId, profile.company_id);
+    if(customError){ return showMessage(message,customError,"error"); }
     closeSaleModal();
     await loadSales();
 }
@@ -2656,7 +2696,7 @@ function openInventoryMovementForProduct(productId){
     openInventoryModal();
 }
 
-function openInventoryModal(){
+async function openInventoryModal(){
     const select=document.getElementById("inventoryProduct");
     select.innerHTML='<option value="">Selecione o produto</option>' + inventoryProductsCache.map(p=>`<option value="${p.id}">${escapeHtml(p.name)} — estoque: ${Number(p.stock||0).toLocaleString("pt-BR",{maximumFractionDigits:3})}</option>`).join("");
     document.getElementById("inventoryType").value="IN";
@@ -2665,6 +2705,8 @@ function openInventoryModal(){
     document.getElementById("inventoryNotes").value="";
     document.getElementById("inventoryMessage").textContent="";
     document.getElementById("inventoryModal").classList.remove("hidden");
+    applyStandardFieldSettings("INVENTORY");
+    await loadModuleCustomFields("INVENTORY", null);
     updateInventoryQuantityLabel();
 }
 function closeInventoryModal(){document.getElementById("inventoryModal").classList.add("hidden");}
@@ -2705,7 +2747,7 @@ async function saveInventoryMovement(){
     const {error:updateError}=await supabaseClient.from("products").update({stock:newStock,updated_at:new Date().toISOString()}).eq("id",productId);
     if(updateError) return showMessage(message,updateError.message,"error");
 
-    const {error:movementError}=await supabaseClient.from("inventory_movements").insert({
+    const {data:movementData,error:movementError}=await supabaseClient.from("inventory_movements").insert({
         company_id:companyId,
         product_id:productId,
         type,
@@ -2714,10 +2756,15 @@ async function saveInventoryMovement(){
         reference_type:"MANUAL",
         notes:notes || (type==="IN"?"Entrada manual":type==="OUT"?"Saída manual":"Ajuste manual"),
         created_by:user?.id || null
-    });
+    }).select("id").single();
     if(movementError){
         await supabaseClient.from("products").update({stock:current,updated_at:new Date().toISOString()}).eq("id",productId);
         return showMessage(message,movementError.message,"error");
+    }
+    const movementId = movementData?.id;
+    if(movementId){
+        const customError = await saveModuleCustomFieldValues("INVENTORY", movementId, companyId);
+        if(customError){ return showMessage(message,customError,"error"); }
     }
     closeInventoryModal();
     await loadInventory();
@@ -2865,6 +2912,8 @@ async function editQuote(id){
     document.getElementById("quoteStatus").value=data.status||"PENDING";
     document.getElementById("quoteNotes").value=data.notes||"";
     renderQuoteItems();clearMessage(document.getElementById("quoteMessage"));document.getElementById("quoteModal").classList.remove("hidden");
+    applyStandardFieldSettings("QUOTES");
+    await loadModuleCustomFields("QUOTES", currentQuoteId);
 }
 async function openQuoteModal(item=null){
     currentQuoteId=item?.id||null;
@@ -2876,6 +2925,8 @@ async function openQuoteModal(item=null){
     document.getElementById("quoteStatus").value=item?.status||"PENDING";
     document.getElementById("quoteNotes").value=item?.notes||"";
     quoteItemsDraft=[];renderQuoteItems();clearMessage(document.getElementById("quoteMessage"));document.getElementById("quoteModal").classList.remove("hidden");
+    applyStandardFieldSettings("QUOTES");
+    await loadModuleCustomFields("QUOTES", currentQuoteId);
 }
 function closeQuoteModal(){document.getElementById("quoteModal").classList.add("hidden");currentQuoteId=null;quoteItemsDraft=[];}
 async function saveQuote(){
@@ -2911,6 +2962,8 @@ async function saveQuote(){
         if(!currentQuoteId)await supabaseClient.from("quotes").delete().eq("id",quoteId);
         return showMessage(msg,itemError.message,"error");
     }
+    const customError = await saveModuleCustomFieldValues("QUOTES", quoteId, profile.company_id);
+    if(customError) return showMessage(msg,customError,"error");
     closeQuoteModal();await loadQuotes();
 }
 async function deleteQuote(id){
@@ -3107,6 +3160,8 @@ async function openServiceOrderModal(item=null){
     renderServiceOrderItems();
     clearMessage(document.getElementById("serviceOrderMessage"));
     document.getElementById("serviceOrderModal").classList.remove("hidden");
+    applyStandardFieldSettings("SERVICE_ORDERS");
+    await loadModuleCustomFields("SERVICE_ORDERS", currentServiceOrderId);
 
     // Carrega clientes/produtos/serviços depois que o modal já estiver visível.
     try {
@@ -3151,6 +3206,8 @@ async function saveServiceOrder(){
     const itemsPayload=serviceOrderItemsDraft.map(x=>({service_order_id:orderId,product_id:x.product_id||null,service_id:x.service_id||null,description:x.description,quantity:x.quantity,unit_price:x.unit_price,discount:x.discount||0,total:serviceOrderItemTotal(x)}));
     const {error:itemError}=await supabaseClient.from("service_order_items").insert(itemsPayload);
     if(itemError){if(!currentServiceOrderId)await supabaseClient.from("service_orders").delete().eq("id",orderId);return showMessage(msg,itemError.message,"error");}
+    const customError = await saveModuleCustomFieldValues("SERVICE_ORDERS", orderId, profile.company_id);
+    if(customError) return showMessage(msg,customError,"error");
     closeServiceOrderModal();await loadServiceOrders();
 }
 async function editServiceOrder(id){const item=serviceOrdersCache.find(x=>x.id===id);if(item)await openServiceOrderModal(item);}
@@ -3265,7 +3322,7 @@ function renderFinance(list){
     tbody.querySelectorAll(".edit-finance").forEach(b=>b.addEventListener("click",()=>editFinance(b.dataset.id)));
     tbody.querySelectorAll(".delete-finance").forEach(b=>b.addEventListener("click",()=>deleteFinance(b.dataset.id)));
 }
-function openFinanceModal(item=null){
+async function openFinanceModal(item=null){
     currentFinanceId=item?.id||null;
     document.getElementById("financeModalTitle").textContent=item?"Editar movimentação":"Nova movimentação";
     document.getElementById("financeType").value=item?.type||"INCOME";
@@ -3279,6 +3336,8 @@ function openFinanceModal(item=null){
     document.getElementById("financeNotes").value=item?.notes||"";
     clearMessage(document.getElementById("financeMessage"));
     document.getElementById("financeModal").classList.remove("hidden");
+    applyStandardFieldSettings("FINANCE");
+    await loadModuleCustomFields("FINANCE", currentFinanceId);
 }
 function closeFinanceModal(){document.getElementById("financeModal").classList.add("hidden");currentFinanceId=null;}
 async function editFinance(id){
@@ -3304,9 +3363,14 @@ async function saveFinance(){
         const {data:profile,error:profileError}=await supabaseClient.from("profiles").select("company_id").eq("id",user?.id).single();
         if(profileError||!profile?.company_id) return showMessage(msg,"Não foi possível identificar a empresa do usuário.","error");
         payload.company_id=profile.company_id; payload.created_by=user?.id||null;
-        result=await supabaseClient.from("financial_transactions").insert(payload);
+        result=await supabaseClient.from("financial_transactions").insert(payload).select("id").single();
     }
     if(result.error){showMessage(msg,result.error.message,"error");return;}
+    const financeId = currentFinanceId || result.data?.id;
+    if(!financeId){showMessage(msg,"Movimentação salva, mas não foi possível identificar o registro.","error");return;}
+    const financeCompanyId = await getCurrentCompanyId();
+    const customError = await saveModuleCustomFieldValues("FINANCE", financeId, financeCompanyId);
+    if(customError) return showMessage(msg,customError,"error");
     closeFinanceModal(); await loadFinance();
 }
 async function deleteFinance(id){
@@ -3448,7 +3512,7 @@ function renderServices(list){
     });
 }
 
-function openServiceModal(service=null){
+async function openServiceModal(service=null){
     currentServiceId = service?.id || null;
     document.getElementById("serviceModalTitle").textContent =
         service ? "Editar serviço" : "Novo serviço";
@@ -3461,6 +3525,8 @@ function openServiceModal(service=null){
 
     clearMessage(document.getElementById("serviceMessage"));
     document.getElementById("serviceModal").classList.remove("hidden");
+    applyStandardFieldSettings("SERVICES");
+    await loadModuleCustomFields("SERVICES", currentServiceId);
 }
 
 function closeServiceModal(){
@@ -3531,7 +3597,7 @@ async function saveService(){
         }
 
         payload.company_id = profile.company_id;
-        result = await supabaseClient.from("services").insert(payload);
+        result = await supabaseClient.from("services").insert(payload).select("id").single();
     }
 
     if(result.error){
@@ -3539,6 +3605,11 @@ async function saveService(){
         return;
     }
 
+    const serviceId = currentServiceId || result.data?.id;
+    if(!serviceId){ showMessage(message,"Serviço salvo, mas não foi possível identificar o registro.","error"); return; }
+    const serviceCompanyId = await getCurrentCompanyId();
+    const customError = await saveModuleCustomFieldValues("SERVICES", serviceId, serviceCompanyId);
+    if(customError){ showMessage(message,customError,"error"); return; }
     closeServiceModal();
     await loadServices();
 }
@@ -3797,6 +3868,7 @@ async function openProductModal(product=null){
     document.getElementById("productDescription").value = product?.description || "";
     clearMessage(document.getElementById("productMessage"));
     document.getElementById("productModal").classList.remove("hidden");
+    applyStandardFieldSettings("PRODUCTS");
     await loadProductCustomFields(currentProductId);
 }
 
@@ -4147,6 +4219,7 @@ async function openClientModal(client=null){
     clearMessage(document.getElementById("clientMessage"));
 
     document.getElementById("clientModal").classList.remove("hidden");
+    applyStandardFieldSettings("CLIENTS");
     await loadClientCustomFields(currentClientId);
 }
 
@@ -4314,6 +4387,180 @@ document.getElementById("clientSearch").addEventListener("input", (event) => {
     renderClients(filtered);
 });
 
+/* ---------- Configuração de campos padrão + campos personalizados dos módulos ---------- */
+async function getCurrentCompanyId(){
+    const {data:{user}}=await supabaseClient.auth.getUser();
+    if(!user) return null;
+    const {data:profile}=await supabaseClient.from("profiles").select("company_id").eq("id",user.id).single();
+    return profile?.company_id || null;
+}
+
+const standardFieldElementMap = {
+    CLIENTS:{name:"clientName",cpf_cnpj:"clientCpf",phone:"clientPhone",whatsapp:"clientWhatsapp",email:"clientEmail",birth_date:"clientBirth",city:"clientCity",state:"clientState",notes:"clientNotes"},
+    PRODUCTS:{name:"productName",code:"productCode",barcode:"productBarcode",category:"productCategory",unit:"productUnit",cost:"productCost",sale:"productSale",stock:"productStock",minimum_stock:"productMinimumStock",supplier:"productSupplier",description:"productDescription"},
+    SERVICES:{name:"serviceName",category:"serviceCategory",price:"servicePrice",duration:"serviceDuration",description:"serviceDescription"},
+    APPOINTMENTS:{client:"appointmentClient",service:"appointmentService",professional:"appointmentProfessional",status:"appointmentStatus",date:"appointmentDate",price:"appointmentPrice",start:"appointmentStart",end:"appointmentEnd",notes:"appointmentNotes"},
+    SALES:{client:"saleClient",date:"saleDate",payment:"salePayment",status:"saleStatus",notes:"saleNotes",item_type:"saleItemType",item_select:"saleItemSelect",item_quantity:"saleItemQuantity",item_price:"saleItemPrice",item_discount:"saleItemDiscount"},
+    INVENTORY:{product:"inventoryProduct",type:"inventoryType",quantity:"inventoryQuantity",unit_cost:"inventoryUnitCost",notes:"inventoryNotes"},
+    FINANCE:{type:"financeType",status:"financeStatus",description:"financeDescription",category:"financeCategory",amount:"financeAmount",date:"financeDate",due_date:"financeDueDate",payment_method:"financePaymentMethod",notes:"financeNotes"},
+    QUOTES:{client:"quoteClient",date:"quoteDate",valid_until:"quoteValidUntil",status:"quoteStatus",notes:"quoteNotes",item_type:"quoteItemType",item_select:"quoteItemSelect",item_quantity:"quoteItemQuantity",item_price:"quoteItemPrice",item_discount:"quoteItemDiscount"},
+    SERVICE_ORDERS:{client:"serviceOrderClient",opening_date:"serviceOrderOpeningDate",scheduled_date:"serviceOrderScheduledDate",completion_date:"serviceOrderCompletionDate",status:"serviceOrderStatus",description:"serviceOrderDescription",diagnosis:"serviceOrderDiagnosis",solution:"serviceOrderSolution",notes:"serviceOrderNotes",item_type:"serviceOrderItemType",item_select:"serviceOrderItemSelect",item_quantity:"serviceOrderItemQuantity",item_price:"serviceOrderItemPrice",item_discount:"serviceOrderItemDiscount"}
+};
+
+const moduleCustomConfig = {
+    SERVICES:{modalId:"serviceModal",sectionId:"serviceCustomFieldsSection",containerId:"serviceCustomFieldsContainer"},
+    APPOINTMENTS:{modalId:"appointmentModal",sectionId:"appointmentCustomFieldsSection",containerId:"appointmentCustomFieldsContainer"},
+    SALES:{modalId:"saleModal",sectionId:"saleCustomFieldsSection",containerId:"saleCustomFieldsContainer"},
+    INVENTORY:{modalId:"inventoryModal",sectionId:"inventoryCustomFieldsSection",containerId:"inventoryCustomFieldsContainer"},
+    FINANCE:{modalId:"financeModal",sectionId:"financeCustomFieldsSection",containerId:"financeCustomFieldsContainer"},
+    QUOTES:{modalId:"quoteModal",sectionId:"quoteCustomFieldsSection",containerId:"quoteCustomFieldsContainer"},
+    SERVICE_ORDERS:{modalId:"serviceOrderModal",sectionId:"serviceOrderCustomFieldsSection",containerId:"serviceOrderCustomFieldsContainer"}
+};
+
+const moduleCustomFieldState = {};
+let standardFieldsCache = [];
+let currentStandardFieldId = null;
+
+function moduleLabel(code){
+    return ({CLIENTS:"Clientes",PRODUCTS:"Produtos",SERVICES:"Serviços",APPOINTMENTS:"Agenda",SALES:"Vendas",INVENTORY:"Estoque",FINANCE:"Financeiro",QUOTES:"Orçamentos",SERVICE_ORDERS:"Ordens de Serviço"})[code] || code;
+}
+
+function ensureModuleCustomFieldsSection(moduleCode){
+    const cfg=moduleCustomConfig[moduleCode];
+    if(!cfg) return null;
+    if(document.getElementById(cfg.sectionId)) return cfg;
+    const modal=document.getElementById(cfg.modalId);
+    if(!modal) return null;
+    const actions=modal.querySelector(".modal-actions");
+    if(!actions) return null;
+    const section=document.createElement("div");
+    section.className="field full hidden";
+    section.id=cfg.sectionId;
+    section.style.marginTop="8px";
+    section.innerHTML=`<div style="font-weight:800;font-size:16px;margin:8px 0 12px">Campos personalizados</div><div id="${cfg.containerId}" class="form-grid"></div>`;
+    actions.parentNode.insertBefore(section,actions);
+    return cfg;
+}
+
+function renderCustomFieldControl(field,value,inputId){
+    const requiredMark=field.required?" *":"";
+    let control="";
+    const safeValue=value ?? "";
+    if(field.field_type==="TEXTAREA") control=`<textarea id="${inputId}" data-custom-field-id="${field.id}" data-required="${field.required}" rows="3" placeholder="${escapeHtml(field.field_label)}">${escapeHtml(safeValue)}</textarea>`;
+    else if(field.field_type==="BOOLEAN") control=`<label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input id="${inputId}" data-custom-field-id="${field.id}" data-required="${field.required}" type="checkbox" ${String(safeValue).toLowerCase()==="true"?"checked":""}> Sim</label>`;
+    else if(field.field_type==="SELECT"){
+        const opts=Array.isArray(field.options)?field.options:[];
+        control=`<select id="${inputId}" data-custom-field-id="${field.id}" data-required="${field.required}"><option value="">Selecione...</option>${opts.map(o=>`<option value="${escapeHtml(o)}" ${String(safeValue)===String(o)?"selected":""}>${escapeHtml(o)}</option>`).join("")}</select>`;
+    }else{
+        let type="text";
+        if(field.field_type==="NUMBER"||field.field_type==="CURRENCY") type="number";
+        if(field.field_type==="DATE") type="date";
+        if(field.field_type==="PHONE") type="tel";
+        if(field.field_type==="EMAIL") type="email";
+        control=`<input id="${inputId}" data-custom-field-id="${field.id}" data-required="${field.required}" type="${type}" ${field.field_type==="CURRENCY"?'step="0.01"':''} value="${escapeHtml(safeValue)}" placeholder="${escapeHtml(field.field_label)}">`;
+    }
+    return `<div class="field"><label for="${inputId}">${escapeHtml(field.field_label)}${requiredMark}</label>${control}</div>`;
+}
+
+async function loadModuleCustomFields(moduleCode,recordId=null){
+    const cfg=ensureModuleCustomFieldsSection(moduleCode);
+    if(!cfg) return;
+    const section=document.getElementById(cfg.sectionId), container=document.getElementById(cfg.containerId);
+    container.innerHTML="";
+    moduleCustomFieldState[moduleCode]={fields:[],values:{}};
+    const {data:fields,error}=await supabaseClient.from("custom_fields").select("*").eq("module_code",moduleCode).eq("active",true).eq("visible",true).order("sort_order",{ascending:true}).order("field_label",{ascending:true});
+    if(error){console.warn(`Campos personalizados ${moduleCode}:`,error.message);section.classList.add("hidden");return;}
+    const state=moduleCustomFieldState[moduleCode]; state.fields=fields||[];
+    if(recordId && state.fields.length){
+        const {data:values}=await supabaseClient.from("custom_field_values").select("custom_field_id,value_text").eq("record_id",recordId);
+        (values||[]).forEach(v=>state.values[v.custom_field_id]=v.value_text??"");
+    }
+    if(!state.fields.length){section.classList.add("hidden");return;}
+    section.classList.remove("hidden");
+    container.innerHTML=state.fields.map(f=>renderCustomFieldControl(f,state.values[f.id]||"",`${moduleCode.toLowerCase()}Custom_${f.id}`)).join("");
+}
+
+async function saveModuleCustomFieldValues(moduleCode,recordId,companyId){
+    const state=moduleCustomFieldState[moduleCode];
+    if(!state || !state.fields.length) return null;
+    for(const field of state.fields){
+        const el=document.getElementById(`${moduleCode.toLowerCase()}Custom_${field.id}`);
+        if(!el) continue;
+        const value=field.field_type==="BOOLEAN"?(el.checked?"true":"false"):(el.value??"");
+        if(field.required && !String(value).trim()) return `Preencha o campo obrigatório: ${field.field_label}.`;
+        const {error}=await supabaseClient.from("custom_field_values").upsert({company_id:companyId,custom_field_id:field.id,record_id:recordId,value_text:String(value),updated_at:new Date().toISOString()},{onConflict:"custom_field_id,record_id"});
+        if(error) return `Não foi possível salvar o campo ${field.field_label}: ${error.message}`;
+    }
+    return null;
+}
+
+async function applyStandardFieldSettings(moduleCode){
+    const map=standardFieldElementMap[moduleCode];
+    if(!map) return;
+    const {data:fields,error}=await supabaseClient.from("module_fields").select("*").eq("module_code",moduleCode).order("sort_order",{ascending:true});
+    if(error){console.warn(`Configuração de campos ${moduleCode}:`,error.message);return;}
+    const byName={};
+    (fields||[]).forEach(f=>byName[f.field_name]=f);
+    const groups=new Map();
+    Object.entries(map).forEach(([name,id])=>{
+        const el=document.getElementById(id); if(!el)return;
+        const field=byName[name]; if(!field)return;
+        const wrapper=el.closest(".field"); if(!wrapper)return;
+        const active=field.protected?true:!!field.active;
+        const visible=field.protected?true:(!!field.visible && active);
+        wrapper.style.display=visible?"":"none";
+        el.required=!!field.required;
+        if(el.disabled && !el.dataset.standardDisabled) el.disabled=false;
+        if(field.protected && !field.visible) wrapper.style.display="";
+        const label=wrapper.querySelector(`label[for="${id}"]`);
+        if(label) label.textContent=field.field_label+(field.required?" *":"");
+        const grid=wrapper.parentElement;
+        if(grid?.classList.contains("form-grid")){
+            if(!groups.has(grid))groups.set(grid,[]);
+            groups.get(grid).push({wrapper,order:Number(field.sort_order)||0});
+        }
+    });
+    groups.forEach(items=>items.sort((a,b)=>a.order-b.order).forEach(x=>x.wrapper.parentElement.appendChild(x.wrapper)));
+}
+
+async function openStandardFieldModal(field){
+    currentStandardFieldId=field.id;
+    document.getElementById("standardFieldModalTitle").textContent="Editar campo padrão";
+    document.getElementById("standardFieldModule").value=moduleLabel(field.module_code);
+    document.getElementById("standardFieldName").value=field.field_name;
+    document.getElementById("standardFieldLabel").value=field.field_label;
+    document.getElementById("standardFieldType").value=field.field_type;
+    document.getElementById("standardFieldOrder").value=field.sort_order??0;
+    document.getElementById("standardFieldRequired").checked=!!field.required;
+    document.getElementById("standardFieldVisible").checked=field.protected?true:!!field.visible;
+    document.getElementById("standardFieldActive").checked=field.protected?true:!!field.active;
+    document.getElementById("standardFieldActive").disabled=!!field.protected;
+    document.getElementById("standardFieldProtectionMessage").textContent=field.protected?"Campo estrutural protegido: ele continua ativo e visível para preservar o funcionamento do módulo.":"Este campo pode ser configurado livremente pelo administrador.";
+    clearMessage(document.getElementById("standardFieldMessage"));
+    document.getElementById("standardFieldModal").classList.remove("hidden");
+}
+function closeStandardFieldModal(){document.getElementById("standardFieldModal").classList.add("hidden");currentStandardFieldId=null;}
+async function loadStandardFields(){
+    const moduleCode=document.getElementById("customFieldModuleFilter").value;
+    const tbody=document.getElementById("standardFieldsTableBody");
+    tbody.innerHTML='<tr><td colspan="7" class="empty">Carregando campos padrão...</td></tr>';
+    const {data,error}=await supabaseClient.from("module_fields").select("*").eq("module_code",moduleCode).order("sort_order",{ascending:true});
+    if(error){tbody.innerHTML=`<tr><td colspan="7" class="empty">Erro: ${escapeHtml(error.message)}</td></tr>`;return;}
+    standardFieldsCache=data||[];
+    if(!standardFieldsCache.length){tbody.innerHTML='<tr><td colspan="7" class="empty">Nenhum campo padrão configurado.</td></tr>';return;}
+    tbody.innerHTML=standardFieldsCache.map(f=>`<tr><td><strong>${escapeHtml(f.field_label)}</strong><br><small>${escapeHtml(f.field_name)}</small>${f.protected?'<br><small>🔒 Estrutural</small>':''}</td><td>${escapeHtml(f.field_type)}</td><td>${f.required?'Sim':'Não'}</td><td>${f.visible?'Sim':'Não'}</td><td>${f.active?'🟢':'🔴'}</td><td>${f.sort_order}</td><td><button class="small-btn" onclick="editStandardField('${f.id}')">Editar</button> ${f.protected?'':'<button class="small-btn" onclick="toggleStandardField(\''+f.id+'\')">'+(f.active?'Desativar':'Ativar')+'</button>'}</td></tr>`).join("");
+}
+window.editStandardField=id=>openStandardFieldModal(standardFieldsCache.find(f=>f.id===id));
+window.toggleStandardField=async id=>{const f=standardFieldsCache.find(x=>x.id===id);if(!f||f.protected)return;const {error}=await supabaseClient.from("module_fields").update({active:!f.active,updated_at:new Date().toISOString()}).eq("id",id);if(error)return alert(error.message);await loadStandardFields();};
+async function saveStandardField(){
+    const msg=document.getElementById("standardFieldMessage");clearMessage(msg);
+    const field=standardFieldsCache.find(x=>x.id===currentStandardFieldId);if(!field)return;
+    const label=document.getElementById("standardFieldLabel").value.trim();if(!label)return showMessage(msg,"Informe o nome exibido.","error");
+    const payload={field_label:label,required:document.getElementById("standardFieldRequired").checked,visible:field.protected?true:document.getElementById("standardFieldVisible").checked,active:field.protected?true:document.getElementById("standardFieldActive").checked,sort_order:Number(document.getElementById("standardFieldOrder").value)||0,updated_at:new Date().toISOString()};
+    const {error}=await supabaseClient.from("module_fields").update(payload).eq("id",field.id);if(error)return showMessage(msg,error.message,"error");
+    closeStandardFieldModal();await loadStandardFields();await applyStandardFieldSettings(field.module_code);
+}
+
 /* ---------- Campos personalizados ---------- */
 let customFieldsCache = [];
 let currentCustomFieldId = null;
@@ -4350,6 +4597,7 @@ async function loadCustomFields(){
     const { data, error } = await supabaseClient.from("custom_fields").select("*").eq("module_code", moduleCode).order("sort_order",{ascending:true}).order("field_label",{ascending:true});
     if(error){ tbody.innerHTML = `<tr><td colspan="7" class="empty">Erro: ${escapeHtml(error.message)}</td></tr>`; return; }
     customFieldsCache = data || [];
+    await loadStandardFields();
     if(!customFieldsCache.length){ tbody.innerHTML='<tr><td colspan="7" class="empty">Nenhum campo personalizado criado.</td></tr>'; return; }
     tbody.innerHTML = customFieldsCache.map(f=>`<tr><td><strong>${escapeHtml(f.field_label)}</strong><br><small>${escapeHtml(f.field_name)}</small></td><td>${escapeHtml(f.field_type)}</td><td>${f.required?'Sim':'Não'}</td><td>${f.visible?'Sim':'Não'}</td><td>${f.active?'🟢':'🔴'}</td><td>${f.sort_order}</td><td><button class="small-btn" onclick="editCustomField('${f.id}')">Editar</button> <button class="small-btn" onclick="toggleCustomField('${f.id}')">${f.active?'Desativar':'Ativar'}</button> <button class="small-btn danger" onclick="deleteCustomField('${f.id}')">Excluir</button></td></tr>`).join("");
 }
@@ -4415,6 +4663,9 @@ document.getElementById("cancelCustomFieldBtn").addEventListener("click",closeCu
 document.getElementById("saveCustomFieldBtn").addEventListener("click",saveCustomField);
 document.getElementById("backCustomFieldsBtn").addEventListener("click",closeCustomFields);
 document.getElementById("customFieldModuleFilter").addEventListener("change",loadCustomFields);
+document.getElementById("closeStandardFieldModal").addEventListener("click",closeStandardFieldModal);
+document.getElementById("cancelStandardFieldBtn").addEventListener("click",closeStandardFieldModal);
+document.getElementById("saveStandardFieldBtn").addEventListener("click",saveStandardField);
 
 /* Eventos do Estoque */
 document.getElementById("newInventoryMovementBtn").addEventListener("click", async()=>{ await loadInventory(); openInventoryModal(); });
