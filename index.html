@@ -126,6 +126,42 @@ button{
 @media(max-width:500px){
     .cards{grid-template-columns:1fr}
 }
+
+.module-page{margin-top:28px}
+.module-header{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:20px}
+.back-btn{width:auto;margin:0;background:none;color:#2563eb;padding:0;font-weight:750}
+.top-action{width:auto;margin:0}
+.toolbar{display:flex;gap:12px;margin-bottom:16px}
+.toolbar input{max-width:520px}
+.table-wrap{overflow:auto;border:1px solid #e2e8f0;border-radius:16px;background:white}
+table{width:100%;border-collapse:collapse;min-width:780px}
+th,td{text-align:left;padding:14px 15px;border-bottom:1px solid #e2e8f0;font-size:14px}
+th{background:#f8fafc;color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+td{color:#334155}
+.empty{text-align:center;color:#64748b;padding:35px}
+.badge{display:inline-flex;padding:5px 9px;border-radius:999px;background:#dcfce7;color:#166534;font-size:12px;font-weight:750}
+.action-btn{width:auto;margin:0 6px 0 0;padding:7px 10px;border-radius:8px;background:#eff6ff;color:#1d4ed8;font-size:12px}
+.action-btn.delete{background:#fee2e2;color:#b91c1c}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
+.modal-card{width:100%;max-width:720px;max-height:90vh;overflow:auto;background:white;border-radius:20px;padding:25px;box-shadow:0 25px 70px rgba(0,0,0,.25)}
+.modal-header{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:18px}
+.modal-header h3{margin:0 0 5px;font-size:23px}
+.close-btn{width:auto;margin:0;background:#f1f5f9;color:#334155;font-size:22px;padding:5px 11px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px}
+.field.full{grid-column:1/-1}
+.field label{margin-top:13px}
+textarea{width:100%;resize:vertical;padding:13px 14px;border:1px solid #cbd5e1;border-radius:12px;font:inherit;outline:none}
+textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.modal-actions button{width:auto;margin:0}
+@media(max-width:650px){
+    .module-header{align-items:stretch;flex-direction:column}
+    .top-action{width:100%}
+    .form-grid{grid-template-columns:1fr}
+    .field.full{grid-column:auto}
+    .modal-card{padding:18px}
+}
+
 </style>
 </head>
 
@@ -216,7 +252,7 @@ button{
 
 <!-- DASHBOARD -->
 <div class="app hidden" id="dashboardApp">
-    <section class="panel" style="grid-column:1/-1">
+    <section class="panel" style="grid-column:1/-1;align-items:flex-start">
         <div class="dashboard">
             <div class="dashboard-top">
                 <div>
@@ -232,6 +268,107 @@ button{
                 <strong>✓ Conectado ao Supabase</strong>
                 <div class="userinfo" style="margin-top:6px">
                     Autenticação e dados da empresa estão sendo utilizados online.
+                </div>
+            </div>
+
+            <!-- MÓDULO CLIENTES -->
+            <div class="module-page hidden" id="clientsPage">
+                <div class="module-header">
+                    <div>
+                        <button class="back-btn" id="backDashboardBtn">← Dashboard</button>
+                        <h2 style="margin:14px 0 5px">Clientes</h2>
+                        <div class="userinfo">Cadastro e gestão de clientes da sua empresa.</div>
+                    </div>
+                    <button class="primary top-action" id="newClientBtn">+ Novo cliente</button>
+                </div>
+
+                <div class="toolbar">
+                    <input id="clientSearch" type="search" placeholder="Pesquisar por nome, telefone ou e-mail...">
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Telefone</th>
+                                <th>WhatsApp</th>
+                                <th>E-mail</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientsTableBody">
+                            <tr><td colspan="6" class="empty">Carregando clientes...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- FORMULÁRIO CLIENTE -->
+            <div class="modal hidden" id="clientModal">
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <div>
+                            <h3 id="clientModalTitle">Novo cliente</h3>
+                            <div class="userinfo">Os dados serão salvos diretamente no Supabase.</div>
+                        </div>
+                        <button class="close-btn" id="closeClientModal">×</button>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="field full">
+                            <label for="clientName">Nome *</label>
+                            <input id="clientName" type="text" placeholder="Nome completo ou razão social">
+                        </div>
+
+                        <div class="field">
+                            <label for="clientCpf">CPF/CNPJ</label>
+                            <input id="clientCpf" type="text" placeholder="CPF ou CNPJ">
+                        </div>
+
+                        <div class="field">
+                            <label for="clientPhone">Telefone</label>
+                            <input id="clientPhone" type="tel" placeholder="(96) 99999-9999">
+                        </div>
+
+                        <div class="field">
+                            <label for="clientWhatsapp">WhatsApp</label>
+                            <input id="clientWhatsapp" type="tel" placeholder="(96) 99999-9999">
+                        </div>
+
+                        <div class="field">
+                            <label for="clientEmail">E-mail</label>
+                            <input id="clientEmail" type="email" placeholder="cliente@email.com">
+                        </div>
+
+                        <div class="field">
+                            <label for="clientBirth">Data de nascimento</label>
+                            <input id="clientBirth" type="date">
+                        </div>
+
+                        <div class="field">
+                            <label for="clientCity">Cidade</label>
+                            <input id="clientCity" type="text" placeholder="Cidade">
+                        </div>
+
+                        <div class="field">
+                            <label for="clientState">Estado</label>
+                            <input id="clientState" type="text" maxlength="2" placeholder="AP">
+                        </div>
+
+                        <div class="field full">
+                            <label for="clientNotes">Observações</label>
+                            <textarea id="clientNotes" rows="3" placeholder="Observações sobre o cliente"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button class="secondary" id="cancelClientBtn">Cancelar</button>
+                        <button class="primary" id="saveClientBtn">Salvar cliente</button>
+                    </div>
+
+                    <div class="message" id="clientMessage"></div>
                 </div>
             </div>
         </div>
@@ -549,11 +686,15 @@ async function loadDashboard(){
     cards.forEach(module => {
         const card = document.createElement("div");
         card.className = "card";
+        card.style.cursor = module.code === "CLIENTS" ? "pointer" : "default";
         card.innerHTML = `
             <div class="icon">${module.icon || "▣"}</div>
             <h3>${escapeHtml(module.name)}</h3>
             <p>${escapeHtml(module.description || "")}</p>
         `;
+        if(module.code === "CLIENTS"){
+            card.addEventListener("click", openClients);
+        }
         moduleCards.appendChild(card);
     });
 
@@ -576,6 +717,215 @@ function escapeHtml(value){
         .replaceAll('"',"&quot;")
         .replaceAll("'","&#039;");
 }
+
+
+/* ---------- Módulo Clientes ---------- */
+let currentClientId = null;
+let clientsCache = [];
+
+function openClients(){
+    document.getElementById("moduleCards").parentElement.querySelector(".status").classList.add("hidden");
+    document.getElementById("moduleCards").classList.add("hidden");
+    document.getElementById("clientsPage").classList.remove("hidden");
+    loadClients();
+}
+
+function closeClients(){
+    document.getElementById("clientsPage").classList.add("hidden");
+    document.getElementById("moduleCards").classList.remove("hidden");
+    document.getElementById("moduleCards").parentElement.querySelector(".status").classList.remove("hidden");
+}
+
+async function loadClients(){
+    const tbody = document.getElementById("clientsTableBody");
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">Carregando clientes...</td></tr>';
+
+    const { data, error } = await supabaseClient
+        .from("clients")
+        .select("id,name,phone,whatsapp,email,active")
+        .order("name", { ascending:true });
+
+    if(error){
+        tbody.innerHTML = `<tr><td colspan="6" class="empty">Erro ao carregar clientes: ${escapeHtml(error.message)}</td></tr>`;
+        return;
+    }
+
+    clientsCache = data || [];
+    renderClients(clientsCache);
+}
+
+function renderClients(list){
+    const tbody = document.getElementById("clientsTableBody");
+
+    if(!list.length){
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum cliente cadastrado.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = "";
+
+    list.forEach(client => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><strong>${escapeHtml(client.name || "")}</strong></td>
+            <td>${escapeHtml(client.phone || "—")}</td>
+            <td>${escapeHtml(client.whatsapp || "—")}</td>
+            <td>${escapeHtml(client.email || "—")}</td>
+            <td><span class="badge">${client.active ? "Ativo" : "Inativo"}</span></td>
+            <td>
+                <button class="action-btn edit-client" data-id="${client.id}">Editar</button>
+                <button class="action-btn delete delete-client" data-id="${client.id}">Excluir</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll(".edit-client").forEach(btn => {
+        btn.addEventListener("click", () => editClient(btn.dataset.id));
+    });
+
+    tbody.querySelectorAll(".delete-client").forEach(btn => {
+        btn.addEventListener("click", () => deleteClient(btn.dataset.id));
+    });
+}
+
+function openClientModal(client=null){
+    currentClientId = client?.id || null;
+    document.getElementById("clientModalTitle").textContent =
+        client ? "Editar cliente" : "Novo cliente";
+
+    document.getElementById("clientName").value = client?.name || "";
+    document.getElementById("clientCpf").value = client?.cpf_cnpj || "";
+    document.getElementById("clientPhone").value = client?.phone || "";
+    document.getElementById("clientWhatsapp").value = client?.whatsapp || "";
+    document.getElementById("clientEmail").value = client?.email || "";
+    document.getElementById("clientBirth").value = client?.birth_date || "";
+    document.getElementById("clientCity").value = client?.city || "";
+    document.getElementById("clientState").value = client?.state || "";
+    document.getElementById("clientNotes").value = client?.notes || "";
+    clearMessage(document.getElementById("clientMessage"));
+
+    document.getElementById("clientModal").classList.remove("hidden");
+}
+
+function closeClientModal(){
+    document.getElementById("clientModal").classList.add("hidden");
+    currentClientId = null;
+}
+
+async function editClient(id){
+    const client = clientsCache.find(c => c.id === id);
+    if(!client) return;
+
+    const { data, error } = await supabaseClient
+        .from("clients")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+    if(error){
+        alert("Não foi possível carregar o cliente: " + error.message);
+        return;
+    }
+
+    openClientModal(data);
+}
+
+async function saveClient(){
+    const message = document.getElementById("clientMessage");
+    clearMessage(message);
+
+    const name = document.getElementById("clientName").value.trim();
+
+    if(!name){
+        showMessage(message, "Informe o nome do cliente.", "error");
+        return;
+    }
+
+    const payload = {
+        name,
+        cpf_cnpj: document.getElementById("clientCpf").value.trim() || null,
+        phone: document.getElementById("clientPhone").value.trim() || null,
+        whatsapp: document.getElementById("clientWhatsapp").value.trim() || null,
+        email: document.getElementById("clientEmail").value.trim() || null,
+        birth_date: document.getElementById("clientBirth").value || null,
+        city: document.getElementById("clientCity").value.trim() || null,
+        state: document.getElementById("clientState").value.trim().toUpperCase() || null,
+        notes: document.getElementById("clientNotes").value.trim() || null,
+        updated_at: new Date().toISOString()
+    };
+
+    let result;
+
+    if(currentClientId){
+        result = await supabaseClient
+            .from("clients")
+            .update(payload)
+            .eq("id", currentClientId);
+    }else{
+        const { data: { user } } = await supabaseClient.auth.getUser();
+
+        const { data: profile, error: profileError } = await supabaseClient
+            .from("profiles")
+            .select("company_id")
+            .eq("id", user.id)
+            .single();
+
+        if(profileError || !profile?.company_id){
+            showMessage(message, "Não foi possível identificar a empresa do usuário.", "error");
+            return;
+        }
+
+        payload.company_id = profile.company_id;
+        result = await supabaseClient.from("clients").insert(payload);
+    }
+
+    if(result.error){
+        showMessage(message, result.error.message, "error");
+        return;
+    }
+
+    closeClientModal();
+    await loadClients();
+}
+
+async function deleteClient(id){
+    const client = clientsCache.find(c => c.id === id);
+    if(!client) return;
+
+    if(!confirm(`Excluir o cliente "${client.name}"?`)) return;
+
+    const { error } = await supabaseClient
+        .from("clients")
+        .delete()
+        .eq("id", id);
+
+    if(error){
+        alert("Não foi possível excluir: " + error.message);
+        return;
+    }
+
+    await loadClients();
+}
+
+document.getElementById("newClientBtn").addEventListener("click", () => openClientModal());
+document.getElementById("closeClientModal").addEventListener("click", closeClientModal);
+document.getElementById("cancelClientBtn").addEventListener("click", closeClientModal);
+document.getElementById("saveClientBtn").addEventListener("click", saveClient);
+document.getElementById("backDashboardBtn").addEventListener("click", closeClients);
+
+document.getElementById("clientSearch").addEventListener("input", (event) => {
+    const term = event.target.value.toLowerCase().trim();
+
+    const filtered = clientsCache.filter(client =>
+        (client.name || "").toLowerCase().includes(term) ||
+        (client.phone || "").toLowerCase().includes(term) ||
+        (client.whatsapp || "").toLowerCase().includes(term) ||
+        (client.email || "").toLowerCase().includes(term)
+    );
+
+    renderClients(filtered);
+});
 
 /* ---------- Inicialização ---------- */
 supabaseClient.auth.onAuthStateChange(async (event, session) => {
