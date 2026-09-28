@@ -1981,6 +1981,9 @@ async function loadDashboard(){
 
     fsSyncLayout(profile, activeModules);
     showDashboard();
+    // Renderiza o dashboard correto conforme o perfil após o login.
+    // PLATFORM_ADMIN recebe a Central da Plataforma; os demais recebem o Dashboard da empresa.
+    showDashboardModules();
 }
 
 /* ---------- Logout ---------- */
