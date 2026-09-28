@@ -3954,18 +3954,26 @@ let currentProductId = null;
 let productsCache = [];
 let productCategoriesCache = [];
 
+function fsHideCompanyDashboard(){
+    // Esconde somente o dashboard da empresa.
+    // Não usar seletores globais aqui, pois o Dashboard Admin também usa as classes fs-kpis/fs-dash-grid.
+    document.querySelectorAll("#fsPlatformDashboard ~ .fs-dashboard-head,#fsPlatformDashboard ~ .fs-kpis,#fsPlatformDashboard ~ .fs-dash-grid,#fsPlatformDashboard ~ .fs-recent-card").forEach(el=>el.classList.add("hidden"));
+    document.getElementById("moduleCards")?.classList.add("hidden");
+    document.getElementById("moduleCards")?.parentElement.querySelector(".status")?.classList.add("hidden");
+}
+
+function fsShowCompanyDashboard(){
+    document.querySelectorAll("#fsPlatformDashboard ~ .fs-dashboard-head,#fsPlatformDashboard ~ .fs-kpis,#fsPlatformDashboard ~ .fs-dash-grid,#fsPlatformDashboard ~ .fs-recent-card").forEach(el=>el.classList.remove("hidden"));
+}
+
 function hideDashboardModules(){
-    document.getElementById("moduleCards").classList.add("hidden");
-    document.getElementById("moduleCards").parentElement.querySelector(".status").classList.add("hidden");
-    document.querySelectorAll(".fs-dashboard-head,.fs-kpis,.fs-dash-grid,.fs-recent-card").forEach(el=>el.classList.add("hidden"));
+    fsHideCompanyDashboard();
     document.getElementById("fsPlatformDashboard")?.classList.add("hidden");
 }
 
 function showDashboardModules(){
     const role=String(window.currentUserProfile?.role||"").trim().toUpperCase();
-    document.getElementById("moduleCards")?.classList.add("hidden");
-    document.getElementById("moduleCards")?.parentElement.querySelector(".status")?.classList.add("hidden");
-    document.querySelectorAll(".fs-dashboard-head,.fs-kpis,.fs-dash-grid,.fs-recent-card").forEach(el=>el.classList.add("hidden"));
+    fsHideCompanyDashboard();
     document.getElementById("fsPlatformDashboard")?.classList.add("hidden");
     ["clientsPage","productsPage","servicesPage","appointmentsPage","salesPage","inventoryPage","financePage","quotesPage","serviceOrdersPage","customFieldsPage","platformAdminPage"].forEach(id=>document.getElementById(id)?.classList.add("hidden"));
 
@@ -3980,7 +3988,7 @@ function showDashboardModules(){
         return showPlatformDashboard();
     }
 
-    document.querySelectorAll(".fs-dashboard-head,.fs-kpis,.fs-dash-grid,.fs-recent-card").forEach(el=>el.classList.remove("hidden"));
+    fsShowCompanyDashboard();
     renderCompanyDashboard();
 }
 
