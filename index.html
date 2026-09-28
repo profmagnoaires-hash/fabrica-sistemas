@@ -235,7 +235,52 @@ html{overflow-x:hidden}body{background:var(--fs-bg);color:var(--fs-text);padding
 @media(max-width:500px){#dashboardApp .cards{grid-template-columns:1fr}.fs-main .panel{padding:14px 12px 85px}.fs-bar-left small{max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.module-page .form-grid{grid-template-columns:1fr}.module-page .modal-card{padding:15px}.table-wrap{max-width:100%;overflow-x:auto}}
 
 .fs-mobile-nav{display:none}
-@media(max-width:700px){.fs-mobile-nav{display:flex;position:fixed;z-index:1001;left:12px;right:12px;bottom:12px;height:60px;background:rgba(0,31,156,.96);border:1px solid #ffffff20;border-radius:18px;box-shadow:0 12px 35px #0004;align-items:center;justify-content:space-around;padding:6px;backdrop-filter:blur(12px)}.fs-mobile-nav button{border:0;background:transparent;color:#cfd9ff;border-radius:12px;width:54px;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:8px;font-weight:800;cursor:pointer}.fs-mobile-nav button span{font-size:15px}.fs-mobile-nav button small{font-size:8px}.fs-mobile-nav button.active{background:#00e8b21f;color:#fff}.fs-mobile-nav button[hidden]{display:none!important}}</style>
+@media(max-width:700px){.fs-mobile-nav{display:flex;position:fixed;z-index:1001;left:12px;right:12px;bottom:12px;height:60px;background:rgba(0,31,156,.96);border:1px solid #ffffff20;border-radius:18px;box-shadow:0 12px 35px #0004;align-items:center;justify-content:space-around;padding:6px;backdrop-filter:blur(12px)}.fs-mobile-nav button{border:0;background:transparent;color:#cfd9ff;border-radius:12px;width:54px;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:8px;font-weight:800;cursor:pointer}.fs-mobile-nav button span{font-size:15px}.fs-mobile-nav button small{font-size:8px}.fs-mobile-nav button.active{background:#00e8b21f;color:#fff}.fs-mobile-nav button[hidden]{display:none!important}}
+/* FS APP UI — visual redesign only */
+:root{
+  --fs-blue:#2563eb;--fs-blue2:#1d4ed8;--fs-green:#10b981;--fs-bg:#f5f7fb;
+  --fs-line:#e5e7eb;--fs-muted:#667085;--fs-text:#111827;--fs-card:#ffffff;
+  --fs-radius:14px;--fs-shadow:0 8px 28px rgba(15,23,42,.06);
+  --fs-sidebar:242px;--fs-font:13px;
+}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--fs-text);background:var(--fs-bg)}
+#dashboardApp{background:var(--fs-bg)!important;color:var(--fs-text)!important}
+#dashboardApp .fs-side{width:var(--fs-sidebar);flex-basis:var(--fs-sidebar);background:var(--fs-card)!important;color:var(--fs-text)!important;border-right:1px solid var(--fs-line);padding:14px 10px;box-shadow:none}
+.fs-brand{justify-content:flex-start!important;margin:3px 7px 18px!important;color:var(--fs-text)!important}
+.fs-logo{width:38px!important;height:38px!important;border-radius:11px!important;background:var(--fs-blue)!important;color:#fff!important;box-shadow:none!important;font-size:14px!important}
+.fs-brand strong{font-size:14px!important}.fs-brand small{color:var(--fs-muted);opacity:1!important;font-size:9px!important}
+.fs-role{background:var(--fs-bg)!important;border:1px solid var(--fs-line)!important;border-radius:11px!important;padding:10px!important;margin:0 3px 12px!important;color:var(--fs-text)!important}
+.fs-role small{color:var(--fs-muted);opacity:1!important}.fs-role strong{font-size:11px!important}
+.fs-nav{gap:2px!important}.fs-nav button{color:#475467!important;border-radius:10px!important;padding:9px 10px!important;font-size:11px!important}
+.fs-nav button span{font-size:14px!important;width:19px!important}.fs-nav button:hover{background:#f2f5fa!important;box-shadow:none!important;color:var(--fs-text)!important}.fs-nav button.active{background:color-mix(in srgb,var(--fs-blue) 9%,transparent)!important;color:var(--fs-blue)!important;box-shadow:inset 3px 0 0 var(--fs-blue)!important}
+.fs-side-footer{border-top:1px solid var(--fs-line)!important;padding-top:10px!important}.fs-side-footer button{background:transparent!important;color:#ef4444!important;padding:9px 10px!important}.fs-side-footer button:hover{background:#fff1f2!important}
+#dashboardApp .fs-main{background:var(--fs-bg)!important}.fs-bar{height:62px!important;flex-basis:62px!important;background:rgba(255,255,255,.92)!important;border-bottom:1px solid var(--fs-line)!important;padding:0 22px!important;backdrop-filter:blur(12px)}
+.fs-menu{width:36px!important;height:36px!important;border-radius:10px!important;background:var(--fs-card)!important}.fs-bar-left{gap:9px!important}.fs-bar-left strong{font-size:14px!important}.fs-bar-left small{font-size:9px!important}.fs-user strong{font-size:10px!important}.fs-user small{font-size:8px!important}.fs-avatar{width:32px!important;height:32px!important;flex-basis:32px!important;background:var(--fs-blue)!important;color:#fff!important}
+#dashboardApp .panel{padding:24px!important;background:var(--fs-bg)!important}
+#dashboardApp .dashboard{max-width:1220px!important;margin:0 auto}
+#dashboardApp .cards{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))!important;gap:12px!important}
+#dashboardApp .card{border:1px solid var(--fs-line)!important;border-radius:var(--fs-radius)!important;background:var(--fs-card)!important;padding:16px!important;box-shadow:none!important}.card:hover{transform:none!important;box-shadow:var(--fs-shadow)!important;border-color:#d8dee8!important}.card .icon{font-size:22px!important}.card h3{font-size:13px!important;margin:9px 0 4px!important}.card p{font-size:10px!important;color:var(--fs-muted)!important}
+#dashboardApp .status,.module-page .module-header,.module-page .table-wrap,.module-page .modal-card,.admin-module-card,.admin-company-item{background:var(--fs-card)!important;border-color:var(--fs-line)!important;box-shadow:none!important;border-radius:var(--fs-radius)!important}
+#dashboardApp .status{padding:15px!important}.module-page .module-header{padding:16px!important;margin-bottom:12px!important}.module-page .module-header h2{font-size:20px!important}
+.module-page input,.module-page select,.module-page textarea,#dashboardApp input,#dashboardApp select,#dashboardApp textarea{min-height:40px!important;padding:9px 11px!important;border:1px solid #d8dee8!important;border-radius:9px!important;font-size:12px!important;background:var(--fs-card)!important;color:var(--fs-text)!important;box-shadow:none!important}
+.module-page textarea,#dashboardApp textarea{min-height:86px!important}.module-page label{font-size:10px!important;color:#475467!important;margin-bottom:5px!important}.module-page .form-grid{gap:12px!important}
+.module-page button,.admin-toggle{min-height:38px!important;border-radius:9px!important;font-size:11px!important;box-shadow:none!important}.module-page .primary,.primary{background:var(--fs-blue)!important}.module-page .secondary{background:color-mix(in srgb,var(--fs-blue) 8%,var(--fs-card))!important;color:var(--fs-blue)!important}
+.table-wrap{overflow:auto!important}.module-page table{font-size:11px!important}.module-page th{font-size:9px!important;text-transform:uppercase;letter-spacing:.35px;color:#667085!important;background:#f8fafc!important}.module-page td,.module-page th{padding:10px 9px!important;border-color:var(--fs-line)!important}
+.fs-mobile-nav{background:rgba(255,255,255,.94)!important;border:1px solid var(--fs-line)!important;box-shadow:0 10px 30px rgba(15,23,42,.14)!important;backdrop-filter:blur(16px);height:58px!important}.fs-mobile-nav button{color:#667085!important}.fs-mobile-nav button.active{background:color-mix(in srgb,var(--fs-blue) 10%,transparent)!important;color:var(--fs-blue)!important}.fs-mobile-nav button span{font-size:14px!important}.fs-mobile-nav button small{font-size:7px!important}
+/* compact app modal */
+.modal,.modal-overlay{padding:12px!important}.modal-card{width:min(560px,calc(100vw - 24px))!important;border-radius:16px!important;padding:18px!important;box-shadow:0 20px 55px rgba(15,23,42,.18)!important}
+/* appearance control */
+.fs-appearance{display:flex;align-items:center;gap:7px;border:1px solid var(--fs-line);background:var(--fs-card);color:var(--fs-text);border-radius:10px;padding:7px 9px;cursor:pointer;font-size:11px}
+.fs-appearance:hover{background:var(--fs-bg)}
+.fs-appearance-panel{position:fixed;right:18px;top:72px;width:280px;background:var(--fs-card);color:var(--fs-text);border:1px solid var(--fs-line);border-radius:16px;box-shadow:0 18px 50px rgba(15,23,42,.18);padding:14px;z-index:3000;display:none}
+.fs-appearance-panel.open{display:block}.fs-appearance-panel h4{margin:0 0 12px;font-size:13px}.fs-appearance-panel label{font-size:9px!important;font-weight:800;margin:0 0 7px!important;color:var(--fs-muted)!important;display:block}
+.fs-theme-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:13px}.fs-theme-btn,.fs-color-btn{border:1px solid var(--fs-line);background:var(--fs-card);color:var(--fs-text);border-radius:9px;padding:9px;font-size:10px;font-weight:800;cursor:pointer}.fs-theme-btn.active,.fs-color-btn.active{border-color:var(--fs-blue);box-shadow:inset 0 0 0 1px var(--fs-blue);color:var(--fs-blue)}.fs-color-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.fs-color-btn{height:34px;padding:0}.fs-color-blue{background:#2563eb}.fs-color-purple{background:#7c3aed}.fs-color-green{background:#059669}.fs-color-orange{background:#ea580c}
+/* dark mode */
+body.fs-dark{background:#0b1220!important;color:#e5e7eb!important}body.fs-dark #dashboardApp{--fs-bg:#0b1220;--fs-card:#111a2b;--fs-line:#263247;--fs-muted:#98a2b3;--fs-text:#e5e7eb}body.fs-dark .fs-bar{background:rgba(17,26,43,.92)!important}body.fs-dark .fs-nav button{color:#aab4c4!important}body.fs-dark .fs-nav button:hover{background:#172235!important;color:#fff!important}body.fs-dark .fs-nav button.active{background:color-mix(in srgb,var(--fs-blue) 16%,transparent)!important;color:#fff!important}body.fs-dark .fs-role{background:#172235!important}body.fs-dark .fs-side{background:#111a2b!important}body.fs-dark .fs-side-footer{border-color:#263247!important}body.fs-dark .fs-mobile-nav{background:rgba(17,26,43,.94)!important}body.fs-dark .module-page th{background:#172235!important;color:#aab4c4!important}body.fs-dark .module-page input,body.fs-dark .module-page select,body.fs-dark .module-page textarea,body.fs-dark #dashboardApp input,body.fs-dark #dashboardApp select,body.fs-dark #dashboardApp textarea{background:#111a2b!important;border-color:#334155!important;color:#e5e7eb!important}
+@media(max-width:900px){#dashboardApp .panel{padding:18px!important}.fs-side{width:240px!important;flex-basis:240px!important}}
+@media(max-width:700px){#dashboardApp .panel{padding:14px 12px 82px!important}.fs-bar{padding:0 12px!important}.fs-appearance-panel{right:10px;left:10px;top:66px;width:auto}.module-page .module-header{padding:14px!important}.module-page .module-header h2{font-size:18px!important}.module-page .form-grid{grid-template-columns:1fr!important}.module-page .form-actions{gap:8px!important}.module-page .form-actions button{width:100%!important}.module-page .table-wrap{border-radius:12px!important}.fs-mobile-nav{left:10px!important;right:10px!important;bottom:10px!important}}
+@media(max-width:420px){#dashboardApp .cards{grid-template-columns:1fr 1fr!important}.card{padding:13px!important}.fs-bar-left strong{font-size:13px!important}.fs-user{gap:0}.fs-user>div:not(.fs-avatar){display:none!important}}
+</style>
 </head>
 
 <body>
@@ -4986,5 +5031,44 @@ document.getElementById("fsLogoutBtn")?.addEventListener("click",()=>document.ge
 document.querySelectorAll("#fsNav [data-nav], #fsMobileNav [data-nav]").forEach(btn=>btn.addEventListener("click",()=>fsNavigate(btn.dataset.nav)));
 </script>
 
+
+<script>
+/* FS visual preferences — no business logic changed */
+(function(){
+  const root=document.documentElement;
+  const body=document.body;
+  const savedTheme=localStorage.getItem('fs_theme')||'light';
+  const savedColor=localStorage.getItem('fs_color')||'blue';
+  const colors={
+    blue:['#2563eb','#1d4ed8'],purple:['#7c3aed','#6d28d9'],green:['#059669','#047857'],orange:['#ea580c','#c2410c']
+  };
+  function applyTheme(theme){
+    body.classList.toggle('fs-dark',theme==='dark');
+    localStorage.setItem('fs_theme',theme);
+    document.querySelectorAll('.fs-theme-btn').forEach(b=>b.classList.toggle('active',b.dataset.theme===theme));
+  }
+  function applyColor(name){
+    const c=colors[name]||colors.blue;
+    root.style.setProperty('--fs-blue',c[0]);root.style.setProperty('--fs-blue2',c[1]);
+    localStorage.setItem('fs_color',name);
+    document.querySelectorAll('.fs-color-btn').forEach(b=>b.classList.toggle('active',b.dataset.color===name));
+  }
+  function build(){
+    const bar=document.querySelector('#dashboardApp .fs-bar'); if(!bar || document.getElementById('fsAppearanceBtn')) return;
+    const btn=document.createElement('button');btn.id='fsAppearanceBtn';btn.className='fs-appearance';btn.type='button';btn.innerHTML='🎨 <span>Aparência</span>';
+    const user=bar.querySelector('.fs-user');bar.insertBefore(btn,user||null);
+    const panel=document.createElement('div');panel.id='fsAppearancePanel';panel.className='fs-appearance-panel';panel.innerHTML=`<h4>Aparência</h4><label>Tema</label><div class="fs-theme-row"><button class="fs-theme-btn" data-theme="light">☀️ Diurno</button><button class="fs-theme-btn" data-theme="dark">🌙 Noturno</button></div><label>Cor principal</label><div class="fs-color-row"><button class="fs-color-btn fs-color-blue" data-color="blue" title="Azul"></button><button class="fs-color-btn fs-color-purple" data-color="purple" title="Roxo"></button><button class="fs-color-btn fs-color-green" data-color="green" title="Verde"></button><button class="fs-color-btn fs-color-orange" data-color="orange" title="Laranja"></button></div>`;
+    document.body.appendChild(panel);
+    btn.addEventListener('click',e=>{e.stopPropagation();panel.classList.toggle('open')});
+    panel.querySelectorAll('.fs-theme-btn').forEach(b=>b.addEventListener('click',()=>applyTheme(b.dataset.theme)));
+    panel.querySelectorAll('.fs-color-btn').forEach(b=>b.addEventListener('click',()=>applyColor(b.dataset.color)));
+    document.addEventListener('click',e=>{if(panel.classList.contains('open')&&!panel.contains(e.target)&&e.target!==btn)panel.classList.remove('open')});
+    applyTheme(savedTheme);applyColor(savedColor);
+  }
+  const obs=new MutationObserver(build);obs.observe(document.body,{childList:true,subtree:true});
+  setTimeout(build,300);setTimeout(build,1200);
+  window.addEventListener('resize',()=>{});
+})();
+</script>
 </body>
 </html>
