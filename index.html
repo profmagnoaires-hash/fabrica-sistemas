@@ -117,6 +117,21 @@ button{
     margin-top:24px;background:#f8fafc;border-radius:16px;padding:20px;
 }
 .status strong{color:#166534}
+
+.admin-company-item{border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;cursor:pointer;background:#fff;text-align:left;width:100%;margin:0}
+.admin-company-item:hover{border-color:#93c5fd;background:#f8fbff}
+.admin-company-item.selected{border-color:#2563eb;background:#eff6ff}
+.admin-company-item strong{display:block}
+.admin-company-item small{color:#64748b}
+.admin-module-card{border:1px solid #e2e8f0;border-radius:14px;padding:16px;background:#fff;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.admin-module-card h4{margin:0 0 4px}.admin-module-card p{margin:0;color:#64748b;font-size:12px}
+.admin-toggle{width:auto;margin:0;padding:9px 13px;font-size:13px}
+.admin-section-title{font-weight:800;margin:0 0 8px}
+.platform-field-row{display:grid;grid-template-columns:1.6fr .8fr .8fr .8fr .8fr auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #e2e8f0}
+.platform-field-row:last-child{border-bottom:0}
+.platform-field-actions button{width:auto;margin:0;padding:8px 10px;font-size:12px}
+@media(max-width:800px){.admin-layout{grid-template-columns:1fr!important}.platform-field-row{grid-template-columns:1fr 1fr}.platform-field-actions{grid-column:1/-1}}
+
 @media(max-width:800px){
     .app{grid-template-columns:1fr}
     .brand{display:none}
@@ -319,6 +334,63 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
                         <tbody id="customFieldsTableBody"><tr><td colspan="7" class="empty">Carregando...</td></tr></tbody>
                     </table>
                 </div>
+            </div>
+
+
+            <!-- PAINEL ADMIN GERAL -->
+            <div class="module-page hidden" id="platformAdminPage">
+                <div class="module-header">
+                    <div>
+                        <button class="back-btn" id="backPlatformAdminBtn">← Dashboard</button>
+                        <h2 style="margin:14px 0 5px">👑 Administração Geral</h2>
+                        <div class="userinfo">Gerencie empresas, módulos e campos disponíveis na plataforma.</div>
+                    </div>
+                </div>
+
+                <div class="admin-layout" style="display:grid;grid-template-columns:320px 1fr;gap:18px;margin-top:18px">
+                    <div class="table-wrap">
+                        <h3 style="margin:0 0 12px">🏢 Empresas</h3>
+                        <input id="platformCompanySearch" placeholder="Pesquisar empresa..." style="margin-bottom:12px">
+                        <div id="platformCompaniesList" style="display:grid;gap:8px;max-height:520px;overflow:auto">
+                            <div class="empty">Carregando empresas...</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="table-wrap" id="platformSelectedCompanyBox">
+                            <div class="empty">Selecione uma empresa para administrar.</div>
+                        </div>
+
+                        <div class="table-wrap" style="margin-top:18px">
+                            <h3 style="margin:0 0 12px">📦 Módulos da empresa</h3>
+                            <div class="userinfo" style="margin-bottom:12px">Ative ou desative os módulos que estarão disponíveis para esta empresa.</div>
+                            <div id="platformModulesList" class="cards" style="grid-template-columns:repeat(2,1fr)">
+                                <div class="empty">Selecione uma empresa.</div>
+                            </div>
+                        </div>
+
+                        <div class="table-wrap" style="margin-top:18px">
+                            <h3 style="margin:0 0 12px">⚙️ Campos do módulo</h3>
+                            <div class="toolbar">
+                                <select id="platformFieldModuleFilter">
+                                    <option value="CLIENTS">Clientes</option>
+                                    <option value="PRODUCTS">Produtos</option>
+                                    <option value="SERVICES">Serviços</option>
+                                    <option value="APPOINTMENTS">Agenda</option>
+                                    <option value="SALES">Vendas</option>
+                                    <option value="INVENTORY">Estoque</option>
+                                    <option value="FINANCE">Financeiro</option>
+                                    <option value="QUOTES">Orçamentos</option>
+                                    <option value="SERVICE_ORDERS">Ordens de Serviço</option>
+                                </select>
+                            </div>
+                            <div id="platformFieldsList">
+                                <div class="empty">Selecione uma empresa.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="message" id="platformAdminMessage"></div>
             </div>
 
 
@@ -1589,27 +1661,31 @@ async function loadDashboard(){
         company = result.data;
     }
 
-    const { data: modules } = await supabaseClient
-        .from("company_modules")
-        .select(`
-            enabled,
-            modules (
-                code,
-                name,
-                description,
-                icon,
-                sort_order
-            )
-        `)
-        .eq("company_id", profile.company_id)
-        .eq("enabled", true);
+    let modules = [];
+    if(profile.role !== "PLATFORM_ADMIN" && profile.company_id){
+        const result = await supabaseClient
+            .from("company_modules")
+            .select(`
+                enabled,
+                modules (
+                    code,
+                    name,
+                    description,
+                    icon,
+                    sort_order
+                )
+            `)
+            .eq("company_id", profile.company_id)
+            .eq("enabled", true);
+        modules = result.data || [];
+    }
 
     document.getElementById("welcomeName").textContent =
         "Olá, " + (profile.full_name || user.email) + "!";
 
-    document.getElementById("companyInfo").textContent =
-        (company?.trade_name || company?.name || "Empresa") +
-        " • " + profile.role;
+    document.getElementById("companyInfo").textContent = profile.role === "PLATFORM_ADMIN"
+        ? "Fábrica de Sistemas • ADMIN GERAL"
+        : ((company?.trade_name || company?.name || "Empresa") + " • " + profile.role);
 
     const moduleCards = document.getElementById("moduleCards");
     moduleCards.innerHTML = "";
@@ -1632,7 +1708,7 @@ async function loadDashboard(){
         .filter(Boolean)
         .sort((a,b) => (a.sort_order || 0) - (b.sort_order || 0));
 
-    const cards = activeModules.length ? activeModules : fallbackModules;
+    const cards = profile.role === "PLATFORM_ADMIN" ? [] : (activeModules.length ? activeModules : fallbackModules);
 
     cards.forEach(module => {
         const card = document.createElement("div");
@@ -1678,7 +1754,14 @@ async function loadDashboard(){
         moduleCards.appendChild(card);
     });
 
-    if(["OWNER","ADMIN","PLATFORM_ADMIN"].includes(profile.role)){
+    if(profile.role === "PLATFORM_ADMIN"){
+        const adminCard = document.createElement("div");
+        adminCard.className = "card";
+        adminCard.style.cursor = "pointer";
+        adminCard.innerHTML = `<div class="icon">👑</div><h3>Administração Geral</h3><p>Empresas, módulos, campos e configurações da plataforma.</p>`;
+        adminCard.addEventListener("click", openPlatformAdmin);
+        moduleCards.appendChild(adminCard);
+    } else if(["OWNER","ADMIN"].includes(profile.role)){
         const settingsCard = document.createElement("div");
         settingsCard.className = "card";
         settingsCard.style.cursor = "pointer";
@@ -3676,6 +3759,7 @@ function showDashboardModules(){
     document.getElementById("quotesPage").classList.add("hidden");
     document.getElementById("serviceOrdersPage").classList.add("hidden");
     document.getElementById("customFieldsPage").classList.add("hidden");
+    document.getElementById("platformAdminPage").classList.add("hidden");
 }
 
 async function openProducts(){
@@ -4561,6 +4645,98 @@ async function saveStandardField(){
     closeStandardFieldModal();await loadStandardFields();await applyStandardFieldSettings(field.module_code);
 }
 
+
+/* ---------- ADMIN GERAL / PLATFORM ADMIN ---------- */
+let platformCompaniesCache=[];
+let platformSelectedCompanyId=null;
+let platformModulesCache=[];
+let platformFieldsCache=[];
+
+function isPlatformAdmin(){ return window.currentUserProfile?.role === "PLATFORM_ADMIN"; }
+
+function openPlatformAdmin(){
+    if(!isPlatformAdmin()) return;
+    hideDashboardModules();
+    document.getElementById("platformAdminPage").classList.remove("hidden");
+    loadPlatformCompanies();
+}
+function closePlatformAdmin(){
+    document.getElementById("platformAdminPage").classList.add("hidden");
+    platformSelectedCompanyId=null;
+    showDashboardModules();
+}
+
+async function loadPlatformCompanies(){
+    const list=document.getElementById("platformCompaniesList");
+    list.innerHTML='<div class="empty">Carregando empresas...</div>';
+    const {data,error}=await supabaseClient.from("companies").select("id,name,trade_name,email,phone,status,created_at").order("name",{ascending:true});
+    if(error){ list.innerHTML=`<div class="empty">Erro: ${escapeHtml(error.message)}</div>`; return; }
+    platformCompaniesCache=data||[];
+    renderPlatformCompanies();
+}
+function renderPlatformCompanies(){
+    const list=document.getElementById("platformCompaniesList");
+    const term=(document.getElementById("platformCompanySearch").value||"").toLowerCase().trim();
+    const rows=platformCompaniesCache.filter(c=>`${c.name||""} ${c.trade_name||""} ${c.email||""}`.toLowerCase().includes(term));
+    if(!rows.length){list.innerHTML='<div class="empty">Nenhuma empresa encontrada.</div>';return;}
+    list.innerHTML=rows.map(c=>`<button class="admin-company-item ${c.id===platformSelectedCompanyId?'selected':''}" onclick="selectPlatformCompany('${c.id}')"><strong>${escapeHtml(c.trade_name||c.name||"Empresa")}</strong><small>${escapeHtml(c.name||"")} • ${escapeHtml(c.status||"")}</small></button>`).join("");
+}
+window.selectPlatformCompany=async function(companyId){
+    platformSelectedCompanyId=companyId;
+    renderPlatformCompanies();
+    const c=platformCompaniesCache.find(x=>x.id===companyId);
+    document.getElementById("platformSelectedCompanyBox").innerHTML=`<div class="admin-section-title">🏢 ${escapeHtml(c?.trade_name||c?.name||"Empresa")}</div><div class="userinfo">${escapeHtml(c?.name||"")}${c?.email?` • ${escapeHtml(c.email)}`:""}</div>`;
+    await loadPlatformModules();
+    await loadPlatformFields();
+};
+async function loadPlatformModules(){
+    const box=document.getElementById("platformModulesList");
+    if(!platformSelectedCompanyId){box.innerHTML='<div class="empty">Selecione uma empresa.</div>';return;}
+    const {data:mods,error:me}=await supabaseClient.from("modules").select("id,code,name,description,icon,sort_order,active").eq("active",true).order("sort_order",{ascending:true});
+    if(me){box.innerHTML=`<div class="empty">Erro: ${escapeHtml(me.message)}</div>`;return;}
+    const {data:enabled,error:ee}=await supabaseClient.from("company_modules").select("module_id,enabled").eq("company_id",platformSelectedCompanyId);
+    if(ee){box.innerHTML=`<div class="empty">Erro: ${escapeHtml(ee.message)}</div>`;return;}
+    const map=new Map((enabled||[]).map(x=>[x.module_id,!!x.enabled]));
+    platformModulesCache=mods||[];
+    box.innerHTML=platformModulesCache.map(m=>`<div class="admin-module-card"><div><div style="font-size:24px">${m.icon||"▣"}</div><h4>${escapeHtml(m.name)}</h4><p>${escapeHtml(m.description||"")}</p></div><button class="secondary admin-toggle" onclick="togglePlatformModule('${m.id}',${map.get(m.id)===true})">${map.get(m.id)===true?'🟢 Ativo':'🔴 Desativado'}</button></div>`).join("");
+}
+window.togglePlatformModule=async function(moduleId,current){
+    if(!platformSelectedCompanyId) return;
+    const {data,error}=await supabaseClient.from("company_modules").upsert({company_id:platformSelectedCompanyId,module_id:moduleId,enabled:!current},{onConflict:"company_id,module_id"}).select().single();
+    if(error){alert(error.message);return;}
+    await loadPlatformModules();
+};
+
+async function loadPlatformFields(){
+    const box=document.getElementById("platformFieldsList");
+    if(!platformSelectedCompanyId){box.innerHTML='<div class="empty">Selecione uma empresa.</div>';return;}
+    const moduleCode=document.getElementById("platformFieldModuleFilter").value;
+    box.innerHTML='<div class="empty">Carregando campos...</div>';
+    const [stdRes,customRes]=await Promise.all([
+        supabaseClient.from("module_fields").select("*").eq("company_id",platformSelectedCompanyId).eq("module_code",moduleCode).order("sort_order",{ascending:true}),
+        supabaseClient.from("custom_fields").select("*").eq("company_id",platformSelectedCompanyId).eq("module_code",moduleCode).order("sort_order",{ascending:true})
+    ]);
+    if(stdRes.error){box.innerHTML=`<div class="empty">Erro nos campos padrão: ${escapeHtml(stdRes.error.message)}</div>`;return;}
+    if(customRes.error){box.innerHTML=`<div class="empty">Erro nos campos personalizados: ${escapeHtml(customRes.error.message)}</div>`;return;}
+    platformFieldsCache=[...(stdRes.data||[]).map(f=>({...f,__kind:"standard"})),...(customRes.data||[]).map(f=>({...f,__kind:"custom"}))];
+    platformFieldsCache.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+    if(!platformFieldsCache.length){box.innerHTML='<div class="empty">Nenhum campo configurado para este módulo.</div>';return;}
+    box.innerHTML=`<div style="overflow:auto"><div class="platform-field-row" style="font-weight:800"><div>Campo</div><div>Tipo</div><div>Obrig.</div><div>Visível</div><div>Ativo</div><div>Ação</div></div>${platformFieldsCache.map(f=>`<div class="platform-field-row"><div><strong>${escapeHtml(f.field_label)}</strong><br><small>${escapeHtml(f.field_name)} ${f.__kind==='custom'?'• personalizado':'• padrão'}</small></div><div>${escapeHtml(f.field_type)}</div><div>${f.required?'Sim':'Não'}</div><div>${f.visible?'Sim':'Não'}</div><div>${f.active?'🟢':'🔴'}</div><div class="platform-field-actions"><button class="secondary" onclick="editPlatformField('${f.__kind}','${f.id}')">Editar</button></div></div>`).join("")}</div>`;
+}
+window.editPlatformField=async function(kind,id){
+    const f=platformFieldsCache.find(x=>x.__kind===kind&&x.id===id); if(!f)return;
+    const label=prompt("Nome exibido:",f.field_label); if(label===null)return;
+    const required=confirm("Este campo deve ser obrigatório?\n\nOK = Sim\nCancelar = Não");
+    const visible=confirm("Este campo deve ficar visível?\n\nOK = Sim\nCancelar = Não");
+    let active=f.active;
+    if(!f.protected) active=confirm("Este campo deve ficar ativo?\n\nOK = Sim\nCancelar = Não");
+    const payload={field_label:label.trim()||f.field_label,required,visible: f.protected ? true : visible,active:f.protected ? true : active,updated_at:new Date().toISOString()};
+    const table=kind==='standard'?"module_fields":"custom_fields";
+    const {error}=await supabaseClient.from(table).update(payload).eq("id",id).eq("company_id",platformSelectedCompanyId);
+    if(error){alert(error.message);return;}
+    await loadPlatformFields();
+};
+
 /* ---------- Campos personalizados ---------- */
 let customFieldsCache = [];
 let currentCustomFieldId = null;
@@ -4666,6 +4842,10 @@ document.getElementById("customFieldModuleFilter").addEventListener("change",loa
 document.getElementById("closeStandardFieldModal").addEventListener("click",closeStandardFieldModal);
 document.getElementById("cancelStandardFieldBtn").addEventListener("click",closeStandardFieldModal);
 document.getElementById("saveStandardFieldBtn").addEventListener("click",saveStandardField);
+
+document.getElementById("backPlatformAdminBtn").addEventListener("click",closePlatformAdmin);
+document.getElementById("platformCompanySearch").addEventListener("input",renderPlatformCompanies);
+document.getElementById("platformFieldModuleFilter").addEventListener("change",loadPlatformFields);
 
 /* Eventos do Estoque */
 document.getElementById("newInventoryMovementBtn").addEventListener("click", async()=>{ await loadInventory(); openInventoryModal(); });
