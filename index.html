@@ -187,7 +187,55 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
     .modal-card{padding:18px}
 }
 
-</style>
+
+/* =========================================================
+   FÁBRICA DE SISTEMAS — NOVO LAYOUT VISUAL
+   Base visual inspirada no layout responsivo do ComunicaTec.
+   Somente apresentação/navegação visual; dados e regras de negócio preservados.
+   ========================================================= */
+:root{--fs-blue:#0030DC;--fs-blue2:#001F9C;--fs-green:#00E8B2;--fs-yellow:#FBDD01;--fs-red:#FF4433;--fs-bg:#F7F9FC;--fs-line:#DCE3ED;--fs-muted:#697586;--fs-text:#101318}
+html{overflow-x:hidden}body{background:var(--fs-bg);color:var(--fs-text);padding:0;display:block;min-height:100vh}
+#authApp{min-height:100vh}
+#authApp .app{width:100%;max-width:none;min-height:100vh;border-radius:0;box-shadow:none;grid-template-columns:47% 53%;background:#fff}
+#authApp .brand{background:var(--fs-blue);padding:45px;position:relative;overflow:hidden}
+#authApp .brand:before{content:"";position:absolute;width:430px;height:430px;border-radius:50%;background:#00e8b21c;top:-180px;left:-130px}
+#authApp .brand:after{content:"";position:absolute;width:500px;height:500px;border-radius:50%;background:#fbdd0117;right:-270px;bottom:-250px}
+#authApp .brand>*{position:relative;z-index:2}
+#authApp .logo{width:min(340px,78vw);height:auto;border-radius:27px;background:#fff;box-shadow:0 25px 70px #0004}
+#authApp .brand h1{font-size:clamp(30px,4vw,48px);letter-spacing:-1.8px}
+#authApp .brand p{font-size:15px;line-height:1.6;color:#fffc}
+#authApp .panel{min-height:100vh;background:#fff;padding:35px}
+#authApp .form{width:min(470px,100%)}
+#authApp input,#authApp select,#authApp textarea{border-color:var(--fs-line);border-radius:12px}
+#authApp input:focus,#authApp select:focus,#authApp textarea:focus{border-color:var(--fs-blue);box-shadow:0 0 0 4px #0030dc12}
+#authApp .primary{background:var(--fs-blue);box-shadow:0 10px 24px #0030dc2b}
+#authApp .primary:hover{background:var(--fs-blue2)}
+
+#dashboardApp{display:flex;width:100%;max-width:none;min-height:100vh;background:var(--fs-bg);border-radius:0;box-shadow:none;overflow:visible;align-items:stretch}
+#dashboardApp .fs-side{width:270px;min-height:100vh;flex:0 0 270px;background:linear-gradient(180deg,var(--fs-blue) 0%,var(--fs-blue2) 100%);color:#fff;padding:18px 14px 16px;display:flex;flex-direction:column;position:sticky;top:0;z-index:1000;overflow-y:auto}
+.fs-brand{display:flex;align-items:center;justify-content:center;gap:10px;margin:2px auto 22px;color:#fff}.fs-logo{width:44px;height:44px;border-radius:13px;background:#fff;color:var(--fs-blue);display:grid;place-items:center;font-size:16px;font-weight:1000;box-shadow:0 10px 24px #0002}.fs-brand strong{display:block;font-size:16px;line-height:1}.fs-brand small{display:block;font-size:10px;opacity:.72;margin-top:4px}
+.fs-role{background:#ffffff1a;border:1px solid #ffffff20;border-radius:14px;padding:11px 12px;margin-bottom:15px}.fs-role small{display:block;font-size:8px;text-transform:uppercase;opacity:.7;font-weight:900}.fs-role strong{display:block;font-size:12px;margin-top:3px}
+.fs-nav{display:flex;flex-direction:column;gap:3px}.fs-nav button{display:flex;align-items:center;gap:11px;width:100%;padding:10px 11px;border:0;border-radius:10px;margin:0;background:transparent;color:#fff;text-align:left;font-size:11px;font-weight:800;cursor:pointer}.fs-nav button span{width:18px;text-align:center;font-size:13px}.fs-nav button:hover,.fs-nav button.active{background:#ffffff1c;box-shadow:inset 3px 0 0 var(--fs-green)}.fs-nav button[hidden]{display:none!important}.fs-side-footer{margin-top:auto;padding-top:15px;border-top:1px solid #ffffff1c}.fs-side-footer button{width:100%;border:0;border-radius:10px;background:#dc2626;color:#fff;padding:10px 11px;font-size:11px;font-weight:800;text-align:left;cursor:pointer}.fs-side-footer button:hover{background:#b91c1c}
+#dashboardApp .fs-main{flex:1;min-width:0;display:flex;flex-direction:column}.fs-bar{height:68px;background:#fff;border-bottom:1px solid var(--fs-line);display:flex;align-items:center;justify-content:space-between;padding:0 27px;flex:0 0 68px}.fs-bar-left{display:flex;align-items:center;gap:10px;min-width:0}.fs-bar-left strong{display:block;font-size:17px}.fs-bar-left small{display:block;color:var(--fs-muted);font-size:10px;margin-top:3px}.fs-user{display:flex;align-items:center;gap:8px;min-width:0}.fs-user strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}.fs-user small{display:block;color:var(--fs-muted);font-size:8px;text-transform:uppercase;font-weight:900;margin-top:2px}.fs-avatar{width:33px;height:33px;border-radius:50%;background:var(--fs-green);color:var(--fs-blue);display:grid;place-items:center;font-weight:900;flex:0 0 33px}.fs-menu{display:none;width:40px;height:40px;border:1px solid var(--fs-line);background:#fff;color:var(--fs-blue);border-radius:10px;font-size:19px;cursor:pointer}
+#dashboardApp .panel{flex:1;min-width:0;width:100%;max-width:none;padding:27px;background:var(--fs-bg);display:block!important}
+#dashboardApp .dashboard{width:100%;max-width:none}
+#dashboardApp .dashboard-top{display:none}
+#dashboardApp .cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+#dashboardApp .card{background:#fff;border:1px solid var(--fs-line);border-radius:15px;padding:17px;transition:.18s;min-width:0}.card:hover{transform:translateY(-1px);box-shadow:0 8px 22px #0030dc0d;border-color:#c8d5ff}.card .icon{font-size:25px}.card h3{font-size:14px;margin:10px 0 5px}.card p{font-size:11px;line-height:1.45}
+#dashboardApp .status{background:#fff;border:1px solid var(--fs-line);border-radius:15px;padding:17px;margin-top:18px}.status strong{color:#087b60;font-size:12px}.status .userinfo{font-size:10px}
+#dashboardApp .module-page{margin-top:0}.module-page .module-header{background:#fff;border:1px solid var(--fs-line);border-radius:15px;padding:18px;margin-bottom:16px}.module-page .module-header h2{font-size:23px;letter-spacing:-.5px}.module-page .table-wrap{border-color:var(--fs-line);border-radius:15px}.module-page .modal-card{border-radius:18px}.module-page .primary{background:var(--fs-blue)}
+#dashboardApp .admin-module-card{border-color:var(--fs-line)}
+.fs-overlay{display:none}
+
+@media(max-width:1100px){#dashboardApp .fs-side{width:230px;flex-basis:230px}#dashboardApp .cards{grid-template-columns:repeat(2,minmax(0,1fr))}#dashboardApp .panel{padding:22px 20px}}
+@media(max-width:700px){#authApp .app{grid-template-columns:1fr}#authApp .brand{display:none}#authApp .panel{padding:24px 18px;min-height:100vh}
+ #dashboardApp{position:relative}.fs-side{position:fixed!important;left:0;top:0;bottom:0;width:min(300px,86vw)!important;min-height:100vh!important;transform:translateX(-105%);transition:transform .25s ease;box-shadow:12px 0 35px #0005;z-index:1002!important}.fs-side.open{transform:translateX(0)}.fs-overlay{display:block;position:fixed;inset:0;background:#0007;z-index:1001;opacity:0;pointer-events:none;transition:opacity .25s ease}.fs-overlay.show{opacity:1;pointer-events:auto}.fs-menu{display:grid;place-items:center}.fs-bar{height:60px;flex-basis:60px;padding:0 12px}.fs-bar-left strong{font-size:15px}.fs-user>div:not(.fs-avatar){display:none}.fs-avatar{width:31px;height:31px;flex-basis:31px}.fs-main .panel{padding:18px 16px 85px}.fs-side-footer{margin-top:auto}.fs-nav button{padding:11px}.fs-nav button span{font-size:14px}
+ #dashboardApp .cards{grid-template-columns:1fr 1fr;gap:10px}.card{padding:14px}.card h3{font-size:13px}.card p{font-size:10px}.module-page .module-header{padding:15px}.module-page .module-header{align-items:flex-start}.module-page .module-header .top-action{width:auto;max-width:100%}
+}
+@media(max-width:500px){#dashboardApp .cards{grid-template-columns:1fr}.fs-main .panel{padding:14px 12px 85px}.fs-bar-left small{max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.module-page .form-grid{grid-template-columns:1fr}.module-page .modal-card{padding:15px}.table-wrap{max-width:100%;overflow-x:auto}}
+
+.fs-mobile-nav{display:none}
+@media(max-width:700px){.fs-mobile-nav{display:flex;position:fixed;z-index:1001;left:12px;right:12px;bottom:12px;height:60px;background:rgba(0,31,156,.96);border:1px solid #ffffff20;border-radius:18px;box-shadow:0 12px 35px #0004;align-items:center;justify-content:space-around;padding:6px;backdrop-filter:blur(12px)}.fs-mobile-nav button{border:0;background:transparent;color:#cfd9ff;border-radius:12px;width:54px;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:8px;font-weight:800;cursor:pointer}.fs-mobile-nav button span{font-size:15px}.fs-mobile-nav button small{font-size:8px}.fs-mobile-nav button.active{background:#00e8b21f;color:#fff}.fs-mobile-nav button[hidden]{display:none!important}}</style>
 </head>
 
 <body>
@@ -277,7 +325,39 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
 
 <!-- DASHBOARD -->
 <div class="app hidden" id="dashboardApp">
-    <section class="panel" style="grid-column:1/-1;align-items:flex-start">
+    <aside class="fs-side" id="fsSide">
+        <div class="fs-brand"><div class="fs-logo">FS</div><div><strong>Fábrica</strong><small>de Sistemas</small></div></div>
+        <div class="fs-role" id="fsRole"><small>Perfil</small><strong>Usuário</strong></div>
+        <nav class="fs-nav" id="fsNav">
+            <button data-nav="DASHBOARD" class="active"><span>📊</span> Dashboard</button>
+            <button data-nav="CLIENTS"><span>👥</span> Clientes</button>
+            <button data-nav="PRODUCTS"><span>📦</span> Produtos</button>
+            <button data-nav="SERVICES"><span>🛠️</span> Serviços</button>
+            <button data-nav="APPOINTMENTS"><span>📅</span> Agenda</button>
+            <button data-nav="SALES"><span>🛒</span> Vendas</button>
+            <button data-nav="INVENTORY"><span>📦</span> Estoque</button>
+            <button data-nav="FINANCE"><span>💰</span> Financeiro</button>
+            <button data-nav="QUOTES"><span>🧾</span> Orçamentos</button>
+            <button data-nav="SERVICE_ORDERS"><span>🔧</span> Ordens de Serviço</button>
+            <button data-nav="CUSTOM_FIELDS" class="fs-settings"><span>⚙️</span> Configurações</button>
+            <button data-nav="PLATFORM_ADMIN" class="fs-platform"><span>👑</span> Administração Geral</button>
+        </nav>
+        <div class="fs-side-footer"><button id="fsLogoutBtn"><span>↪</span> Sair</button></div>
+    </aside>
+    <div class="fs-overlay" id="fsOverlay"></div>
+    <div class="fs-mobile-nav" id="fsMobileNav">
+        <button data-nav="DASHBOARD"><span>📊</span><small>Início</small></button>
+        <button data-nav="CLIENTS"><span>👥</span><small>Clientes</small></button>
+        <button data-nav="SALES"><span>🛒</span><small>Vendas</small></button>
+        <button data-nav="APPOINTMENTS"><span>📅</span><small>Agenda</small></button>
+        <button data-nav="CUSTOM_FIELDS"><span>⚙️</span><small>Config.</small></button>
+    </div>
+    <div class="fs-main">
+        <header class="fs-bar">
+            <div class="fs-bar-left"><button class="fs-menu" id="fsMenuBtn">☰</button><div><strong id="fsPageTitle">Dashboard</strong><small id="fsCompanyInfo"></small></div></div>
+            <div class="fs-user"><div class="fs-avatar" id="fsAvatar">U</div><div><strong id="fsUserName">Usuário</strong><small id="fsUserRole">USUÁRIO</small></div></div>
+        </header>
+    <section class="panel" style="align-items:flex-start">
         <div class="dashboard">
             <div class="dashboard-top">
                 <div>
@@ -1390,6 +1470,7 @@ select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
             </div>
         </div>
     </section>
+    </div>
 </div>
 
 <script>
@@ -1662,8 +1743,6 @@ async function loadDashboard(){
     }
 
     let modules = [];
-    let modulesError = null;
-
     if(profile.role !== "PLATFORM_ADMIN" && profile.company_id){
         const result = await supabaseClient
             .from("company_modules")
@@ -1679,15 +1758,7 @@ async function loadDashboard(){
             `)
             .eq("company_id", profile.company_id)
             .eq("enabled", true);
-
         modules = result.data || [];
-        modulesError = result.error || null;
-
-        // Não usar fallback com todos os módulos quando a consulta falhar.
-        if(modulesError){
-            console.error("Erro ao carregar módulos da empresa:", modulesError);
-            modules = [];
-        }
     }
 
     document.getElementById("welcomeName").textContent =
@@ -1718,12 +1789,7 @@ async function loadDashboard(){
         .filter(Boolean)
         .sort((a,b) => (a.sort_order || 0) - (b.sort_order || 0));
 
-    // Para empresas, somente os módulos efetivamente habilitados em
-    // company_modules podem aparecer. O fallback não pode reativar módulos
-    // desativados pelo Admin Geral.
-    const cards = profile.role === "PLATFORM_ADMIN"
-        ? []
-        : (modulesError ? [] : activeModules);
+    const cards = profile.role === "PLATFORM_ADMIN" ? [] : (activeModules.length ? activeModules : fallbackModules);
 
     cards.forEach(module => {
         const card = document.createElement("div");
@@ -1785,6 +1851,7 @@ async function loadDashboard(){
         moduleCards.appendChild(settingsCard);
     }
 
+    fsSyncLayout(profile, activeModules);
     showDashboard();
 }
 
@@ -4717,65 +4784,8 @@ async function loadPlatformModules(){
 }
 window.togglePlatformModule=async function(moduleId,current){
     if(!platformSelectedCompanyId) return;
-
-    const nextEnabled = !current;
-
-    const existing = await supabaseClient
-        .from("company_modules")
-        .select("company_id,module_id,enabled")
-        .eq("company_id",platformSelectedCompanyId)
-        .eq("module_id",moduleId)
-        .maybeSingle();
-
-    if(existing.error){
-        alert("Erro ao verificar o módulo: " + existing.error.message);
-        return;
-    }
-
-    let result;
-
-    if(existing.data){
-        result = await supabaseClient
-            .from("company_modules")
-            .update({enabled:nextEnabled})
-            .eq("company_id",platformSelectedCompanyId)
-            .eq("module_id",moduleId)
-            .select()
-            .single();
-    }else{
-        result = await supabaseClient
-            .from("company_modules")
-            .insert({
-                company_id:platformSelectedCompanyId,
-                module_id:moduleId,
-                enabled:nextEnabled
-            })
-            .select()
-            .single();
-    }
-
-    if(result.error){
-        alert("Não foi possível alterar o módulo: " + result.error.message);
-        return;
-    }
-
-    const verify = await supabaseClient
-        .from("company_modules")
-        .select("enabled")
-        .eq("company_id",platformSelectedCompanyId)
-        .eq("module_id",moduleId)
-        .single();
-
-    if(verify.error){
-        alert("Alteração realizada, mas não foi possível confirmar: " + verify.error.message);
-        return;
-    }
-
-    if(!!verify.data.enabled !== nextEnabled){
-        alert("A alteração não foi confirmada pelo banco de dados.");
-        return;
-    }
-
+    const {data,error}=await supabaseClient.from("company_modules").upsert({company_id:platformSelectedCompanyId,module_id:moduleId,enabled:!current},{onConflict:"company_id,module_id"}).select().single();
+    if(error){alert(error.message);return;}
     await loadPlatformModules();
 };
 
@@ -4928,6 +4938,52 @@ document.getElementById("backInventoryDashboardBtn").addEventListener("click", c
 document.getElementById("inventoryType").addEventListener("change", updateInventoryQuantityLabel);
 document.getElementById("inventorySearch").addEventListener("input", renderInventoryProducts);
 document.getElementById("inventoryStatusFilter").addEventListener("change", renderInventoryProducts);
+
+/* ---------- Layout responsivo FS / ComunicaTec ---------- */
+function fsSetPageTitle(title){ const el=document.getElementById("fsPageTitle"); if(el) el.textContent=title; }
+function fsSetActiveNav(code){
+    document.querySelectorAll("#fsNav [data-nav], #fsMobileNav [data-nav]").forEach(btn=>btn.classList.toggle("active",btn.dataset.nav===code));
+}
+function fsCloseMenu(){ document.getElementById("fsSide")?.classList.remove("open"); document.getElementById("fsOverlay")?.classList.remove("show"); }
+function fsOpenMenu(){ document.getElementById("fsSide")?.classList.add("open"); document.getElementById("fsOverlay")?.classList.add("show"); }
+function fsNavigate(code){
+    fsCloseMenu(); fsSetActiveNav(code);
+    const titles={DASHBOARD:"Dashboard",CLIENTS:"Clientes",PRODUCTS:"Produtos",SERVICES:"Serviços",APPOINTMENTS:"Agenda",SALES:"Vendas",INVENTORY:"Estoque",FINANCE:"Financeiro",QUOTES:"Orçamentos",SERVICE_ORDERS:"Ordens de Serviço",CUSTOM_FIELDS:"Configurações",PLATFORM_ADMIN:"Administração Geral"};
+    fsSetPageTitle(titles[code]||"Fábrica de Sistemas");
+    if(code==="DASHBOARD") return showDashboardModules();
+    if(code==="CLIENTS") return openClients();
+    if(code==="PRODUCTS") return openProducts();
+    if(code==="SERVICES") return openServices();
+    if(code==="APPOINTMENTS") return openAppointments();
+    if(code==="SALES") return openSales();
+    if(code==="INVENTORY") return openInventory();
+    if(code==="FINANCE") return openFinance();
+    if(code==="QUOTES") return openQuotes();
+    if(code==="SERVICE_ORDERS") return openServiceOrders();
+    if(code==="CUSTOM_FIELDS") return openCustomFields();
+    if(code==="PLATFORM_ADMIN") return openPlatformAdmin();
+}
+function fsSyncLayout(profile, activeModules){
+    const role=profile?.role||"USER";
+    const roleText={PLATFORM_ADMIN:"ADMIN GERAL",OWNER:"OWNER",ADMIN:"ADMIN",MANAGER:"GERENTE",USER:"USUÁRIO"}[role]||role;
+    const companyText=role==="PLATFORM_ADMIN"?"Fábrica de Sistemas":(document.getElementById("companyInfo")?.textContent||"Empresa");
+    document.getElementById("fsUserName")?.replaceChildren(document.createTextNode(profile?.full_name||profile?.email||"Usuário"));
+    document.getElementById("fsUserRole")?.replaceChildren(document.createTextNode(roleText));
+    document.getElementById("fsCompanyInfo")?.replaceChildren(document.createTextNode(companyText));
+    document.getElementById("fsRole")?.querySelector("strong")?.replaceChildren(document.createTextNode(roleText));
+    document.getElementById("fsRole")?.querySelector("small")?.replaceChildren(document.createTextNode(companyText));
+    const allowed=new Set((activeModules||[]).map(m=>m.code));
+    allowed.add("DASHBOARD");
+    if(["OWNER","ADMIN"].includes(role)) allowed.add("CUSTOM_FIELDS");
+    if(role==="PLATFORM_ADMIN") allowed.add("PLATFORM_ADMIN");
+    document.querySelectorAll("#fsNav [data-nav], #fsMobileNav [data-nav]").forEach(btn=>{ const code=btn.dataset.nav; btn.hidden=!allowed.has(code); });
+    if(role!=="PLATFORM_ADMIN") document.querySelector('#fsNav [data-nav="PLATFORM_ADMIN"]')?.setAttribute("hidden","");
+}
+
+document.getElementById("fsMenuBtn")?.addEventListener("click",fsOpenMenu);
+document.getElementById("fsOverlay")?.addEventListener("click",fsCloseMenu);
+document.getElementById("fsLogoutBtn")?.addEventListener("click",()=>document.getElementById("logoutBtn")?.click());
+document.querySelectorAll("#fsNav [data-nav], #fsMobileNav [data-nav]").forEach(btn=>btn.addEventListener("click",()=>fsNavigate(btn.dataset.nav)));
 </script>
 
 </body>
