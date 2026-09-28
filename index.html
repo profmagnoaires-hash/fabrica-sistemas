@@ -1662,6 +1662,8 @@ async function loadDashboard(){
     }
 
     let modules = [];
+    let modulesError = null;
+
     if(profile.role !== "PLATFORM_ADMIN" && profile.company_id){
         const result = await supabaseClient
             .from("company_modules")
@@ -1677,7 +1679,15 @@ async function loadDashboard(){
             `)
             .eq("company_id", profile.company_id)
             .eq("enabled", true);
+
         modules = result.data || [];
+        modulesError = result.error || null;
+
+        // Não usar fallback com todos os módulos quando a consulta falhar.
+        if(modulesError){
+            console.error("Erro ao carregar módulos da empresa:", modulesError);
+            modules = [];
+        }
     }
 
     document.getElementById("welcomeName").textContent =
@@ -1708,7 +1718,12 @@ async function loadDashboard(){
         .filter(Boolean)
         .sort((a,b) => (a.sort_order || 0) - (b.sort_order || 0));
 
-    const cards = profile.role === "PLATFORM_ADMIN" ? [] : (activeModules.length ? activeModules : fallbackModules);
+    // Para empresas, somente os módulos efetivamente habilitados em
+    // company_modules podem aparecer. O fallback não pode reativar módulos
+    // desativados pelo Admin Geral.
+    const cards = profile.role === "PLATFORM_ADMIN"
+        ? []
+        : (modulesError ? [] : activeModules);
 
     cards.forEach(module => {
         const card = document.createElement("div");
@@ -4702,8 +4717,65 @@ async function loadPlatformModules(){
 }
 window.togglePlatformModule=async function(moduleId,current){
     if(!platformSelectedCompanyId) return;
-    const {data,error}=await supabaseClient.from("company_modules").upsert({company_id:platformSelectedCompanyId,module_id:moduleId,enabled:!current},{onConflict:"company_id,module_id"}).select().single();
-    if(error){alert(error.message);return;}
+
+    const nextEnabled = !current;
+
+    const existing = await supabaseClient
+        .from("company_modules")
+        .select("company_id,module_id,enabled")
+        .eq("company_id",platformSelectedCompanyId)
+        .eq("module_id",moduleId)
+        .maybeSingle();
+
+    if(existing.error){
+        alert("Erro ao verificar o módulo: " + existing.error.message);
+        return;
+    }
+
+    let result;
+
+    if(existing.data){
+        result = await supabaseClient
+            .from("company_modules")
+            .update({enabled:nextEnabled})
+            .eq("company_id",platformSelectedCompanyId)
+            .eq("module_id",moduleId)
+            .select()
+            .single();
+    }else{
+        result = await supabaseClient
+            .from("company_modules")
+            .insert({
+                company_id:platformSelectedCompanyId,
+                module_id:moduleId,
+                enabled:nextEnabled
+            })
+            .select()
+            .single();
+    }
+
+    if(result.error){
+        alert("Não foi possível alterar o módulo: " + result.error.message);
+        return;
+    }
+
+    const verify = await supabaseClient
+        .from("company_modules")
+        .select("enabled")
+        .eq("company_id",platformSelectedCompanyId)
+        .eq("module_id",moduleId)
+        .single();
+
+    if(verify.error){
+        alert("Alteração realizada, mas não foi possível confirmar: " + verify.error.message);
+        return;
+    }
+
+    if(!!verify.data.enabled !== nextEnabled){
+        alert("A alteração não foi confirmada pelo banco de dados.");
+        return;
+    }
+
     await loadPlatformModules();
 };
 
