@@ -3962,21 +3962,35 @@ function hideDashboardModules(){
 }
 
 function showDashboardModules(){
-    document.getElementById("moduleCards").classList.add("hidden");
-    document.getElementById("moduleCards").parentElement.querySelector(".status").classList.add("hidden");
+    const role=String(window.currentUserProfile?.role||"").trim().toUpperCase();
+    document.getElementById("moduleCards")?.classList.add("hidden");
+    document.getElementById("moduleCards")?.parentElement.querySelector(".status")?.classList.add("hidden");
     document.querySelectorAll(".fs-dashboard-head,.fs-kpis,.fs-dash-grid,.fs-recent-card").forEach(el=>el.classList.add("hidden"));
     document.getElementById("fsPlatformDashboard")?.classList.add("hidden");
     ["clientsPage","productsPage","servicesPage","appointmentsPage","salesPage","inventoryPage","financePage","quotesPage","serviceOrdersPage","customFieldsPage","platformAdminPage"].forEach(id=>document.getElementById(id)?.classList.add("hidden"));
-    if(window.currentUserProfile?.role === "PLATFORM_ADMIN") return showPlatformDashboard();
+
+    if(role === "PLATFORM_ADMIN"){
+        // Central do Admin Geral: garante que o dashboard correto seja exibido
+        // mesmo se o perfil vier com espaços/caixa diferente do banco.
+        const adminDash=document.getElementById("fsPlatformDashboard");
+        if(adminDash){
+            adminDash.classList.remove("hidden");
+            adminDash.style.display="block";
+        }
+        return showPlatformDashboard();
+    }
+
     document.querySelectorAll(".fs-dashboard-head,.fs-kpis,.fs-dash-grid,.fs-recent-card").forEach(el=>el.classList.remove("hidden"));
     renderCompanyDashboard();
 }
 
 async function showPlatformDashboard(){
     const profile=window.currentUserProfile;
-    if(!profile || profile.role!=="PLATFORM_ADMIN") return;
+    const role=String(profile?.role||"").trim().toUpperCase();
+    if(!profile || role!=="PLATFORM_ADMIN") return;
     const el=id=>document.getElementById(id);
-    document.getElementById("fsPlatformDashboard")?.classList.remove("hidden");
+    const adminDash=el("fsPlatformDashboard");
+    if(adminDash){ adminDash.classList.remove("hidden"); adminDash.style.display="block"; }
     const today=new Date();
     const dateBR=new Intl.DateTimeFormat("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).format(today);
     el("fsAdminGreeting").textContent=`Olá, ${(profile.full_name||"Administrador").split(" ")[0]}!`;
@@ -4950,7 +4964,7 @@ let platformSelectedCompanyId=null;
 let platformModulesCache=[];
 let platformFieldsCache=[];
 
-function isPlatformAdmin(){ return window.currentUserProfile?.role === "PLATFORM_ADMIN"; }
+function isPlatformAdmin(){ return String(window.currentUserProfile?.role||"").trim().toUpperCase() === "PLATFORM_ADMIN"; }
 
 function openPlatformAdmin(){
     if(!isPlatformAdmin()) return;
